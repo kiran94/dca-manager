@@ -24,3 +24,14 @@ terraform apply
 # Add remote repository to local
 git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 ```
+
+### Lambda
+
+Assuming you are at the root of the repository.
+
+```sh
+make
+
+# for debugging
+make debug
+```
