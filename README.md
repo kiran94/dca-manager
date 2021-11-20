@@ -7,6 +7,8 @@ Dollar Cost Average Manager
 
 ### Infrastructure
 
+Assuming you are at the root of the repository.
+
 ```sh
 cd terraform
 
@@ -15,6 +17,10 @@ cd terraform
 # https://registry.terraform.io/providers/integrations/github/latest/docs#authentication
 terraform init
 
+# Apply Infrastructure
 terraform plan
 terraform apply
+
+# Add remote repository to local
+git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 ```
