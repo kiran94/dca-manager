@@ -1,4 +1,3 @@
-
 # dca-manager
 
 Dollar Cost Average Manager
@@ -15,6 +14,9 @@ cd terraform
 # The aws and github providers require authentication
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication
 # https://registry.terraform.io/providers/integrations/github/latest/docs#authentication
+
+# The terraform backend configured will also need to be updated
+
 terraform init
 
 # Apply Infrastructure
