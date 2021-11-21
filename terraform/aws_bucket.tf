@@ -8,7 +8,15 @@ resource "aws_s3_bucket_object" "config" {
   source = "../configuration/example_config.json"
   etag   = filemd5("../configuration/example_config.json")
 
-  lifecycle = {
+  lifecycle {
     ignore_changes = all
   }
+}
+
+output "bucket" {
+  value = aws_s3_bucket.main.bucket
+}
+
+output "config_path" {
+  value = aws_s3_bucket_object.config.id
 }

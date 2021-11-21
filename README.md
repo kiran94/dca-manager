@@ -27,11 +27,14 @@ terraform apply
 git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 ```
 
-### Lambda
+### Code
 
 Assuming you are at the root of the repository.
 
 ```sh
+export DCA_BUCKET=$(terraform -chdir=terraform output -raw bucket)
+export DCA_CONFIG=$(terraform -chdir=terraform output -raw config_path)
+
 make
 
 # for debugging
