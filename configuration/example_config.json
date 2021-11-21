@@ -1,0 +1,12 @@
+{
+  "Orders": [
+    {
+      "direction": "buy",
+      "ordertype": "market",
+      "volume": "10",
+      "pair": "ADAGBP",
+      "validate": true,
+      "enabled": true
+    }
+  ]
+}
