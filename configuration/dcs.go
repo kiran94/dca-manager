@@ -20,6 +20,7 @@ type DCAConfig struct {
 }
 
 type DCAOrder struct {
+	Exchange  string `json:"exchange"`
 	Direction string `json:"direction"`
 	OrderType string `json:"ordertype"`
 	Volume    string `json:"volume"`
