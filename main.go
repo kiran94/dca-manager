@@ -1,14 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/beldur/kraken-go-api-client"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	krakenapi "github.com/beldur/kraken-go-api-client"
 	"github.com/kiran94/dca-manager/configuration"
+	"github.com/kiran94/dca-manager/orders"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -38,7 +42,10 @@ func main() {
 			FullTimestamp: true,
 		})
 
-		HandleRequest(context.TODO(), MyEvent{Name: "Kiran"})
+		res, err := HandleRequest(context.TODO(), MyEvent{Name: "Event"})
+
+		fmt.Println(res)
+		fmt.Println(err)
 	}
 
 	log.Info("Lambda Execution Done.")
@@ -54,7 +61,7 @@ func HandleRequest(c context.Context, event MyEvent) (string, error) {
 	// Call AWS
 	config, err := config.LoadDefaultConfig(c)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	// Get DCA Configuration
@@ -70,23 +77,70 @@ func HandleRequest(c context.Context, event MyEvent) (string, error) {
 		return "", ssmErr
 	}
 
-	// PLACE ORDERS
-	kraken := krakenapi.New(*key, *secret)
+	// Place orders
+	o := map[string]orders.Orderer{}
+	o["kraken"] = orders.KrakenOrderer{
+		Client: krakenapi.New(*key, *secret),
+	}
+
 	for index, order := range dcaConfig.Orders {
+		log.Debugf("Running Order %s with Exchange %s", index, order.Exchange)
 
-		log.Infof("Order %d: %s %s %s (%s)", index, order.Direction, order.Volume, order.Pair, order.OrderType)
+		// REAL
+		exchange := o[order.Exchange]
+		orderResult, orderErr := exchange.MakeOrder(&order)
 
-		if !order.Enabled {
-			log.Warn("order disabled, skipping")
-			continue
+		// FAKE
+
+		// orderResult := &orders.OrderFufilled{
+		// 	Result: &krakenapi.AddOrderResponse{
+		// 		TransactionIds: []string{"TXID"},
+		// 		Description: krakenapi.OrderDescription{
+		// 			AssetPair:      "ADAGBP",
+		// 			Close:          "100",
+		// 			Leverage:       "Leverage",
+		// 			Order:          "Order",
+		// 			OrderType:      "OrderType",
+		// 			PrimaryPrice:   "PrimaryPrice",
+		// 			SecondaryPrice: "SecondaryPrice",
+		// 			Type:           "Type",
+		// 		},
+		// 	},
+		// 	Timestamp: 12345678,
+		// }
+
+		// var orderErr error
+
+		////////////////////////////
+
+		if orderErr != nil {
+			return "", orderErr
 		}
 
-		addOrderResponse, err := kraken.AddOrder(order.Pair, order.Direction, order.OrderType, order.Volume, make(map[string]string, 0))
+		const s3transactionPrefix string = "transactions"
+		orderResultInner := (*orderResult).Result.(*krakenapi.AddOrderResponse)
+
+		s3Path := fmt.Sprintf(
+			"%s/ordertype=%s/pair=%s/%d.json",
+			s3transactionPrefix,
+			orderResultInner.Description.OrderType,
+			orderResultInner.Description.AssetPair,
+			(*orderResult).Timestamp)
+
+		orderResultBytes, err := json.Marshal(orderResult)
 		if err != nil {
-			panic(err)
+			return "", err
 		}
 
-		fmt.Println(addOrderResponse)
+		s3Bucket := os.Getenv(configuration.EnvS3Bucket)
+		s3Client := s3.NewFromConfig(config)
+
+		log.Infof("Uploading to Bucket %s, Key %s", s3Bucket, s3Path)
+		s3Client.PutObject(c, &s3.PutObjectInput{
+			Bucket: &s3Bucket,
+			Key:    &s3Path,
+			Body:   bytes.NewReader(orderResultBytes),
+		})
 	}
 
 	return fmt.Sprintf("Hello %s!", event.Name), nil
