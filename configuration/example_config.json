@@ -1,6 +1,7 @@
 {
-  "Orders": [
+  "orders": [
     {
+      "exchange": "kraken",
       "direction": "buy",
       "ordertype": "market",
       "volume": "10",
