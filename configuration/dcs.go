@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	envS3Bucket     string = "DCA_BUCKET"
-	envS3ConfigPath string = "DCA_CONFIG"
+	EnvS3Bucket     string = "DCA_BUCKET"
+	EnvS3ConfigPath string = "DCA_CONFIG"
 )
 
 type DCAConfig struct {
@@ -31,8 +31,8 @@ type DCAOrder struct {
 // Gets DCA Configuration from S3
 func GetDCAConfiguration(config aws.Config, c context.Context) (*DCAConfig, error) {
 
-	s3Bucket := os.Getenv(envS3Bucket)
-	s3ConfigPath := os.Getenv(envS3ConfigPath)
+	s3Bucket := os.Getenv(EnvS3Bucket)
+	s3ConfigPath := os.Getenv(EnvS3ConfigPath)
 	s3Client := s3.NewFromConfig(config)
 
 	configObject, err := s3Client.GetObject(c, &s3.GetObjectInput{
