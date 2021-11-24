@@ -3,6 +3,9 @@ GO_OUT=main
 build:
 	go build -o main main.go
 
+test:
+	go test
+
 debug:
 	go build -gcflags=all="-N -l" -o $(GO_OUT) ./main.go
 	cgdb $(GO_OUT)
