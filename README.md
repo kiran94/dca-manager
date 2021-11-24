@@ -1,5 +1,7 @@
 # dca-manager
 
+[![main](https://github.com/kiran94/dca-manager/actions/workflows/main.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/main.yml)
+
 Dollar Cost Average Manager
 
 ## Getting Started
