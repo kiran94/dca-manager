@@ -58,4 +58,37 @@ jobs:
         run: |
           terraform validate -no-color
 
+  deploy:
+    needs: [build, terraform-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: "GithubAction"
+
+      - name: Pack
+        run: make pack_lambda
+
+      - name: Deploy
+        run: >
+          aws s3 cp function.zip s3://${{ secrets.AWS_LAMBDA_BUCKET }}/${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_KEY }}
+
+
+
+
 

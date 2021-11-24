@@ -69,3 +69,4 @@ terraform.rc
 main
 dca-manager
 data
+function.zip

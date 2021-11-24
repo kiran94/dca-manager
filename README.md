@@ -30,6 +30,8 @@ terraform apply
 git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 ```
 
+*Note some coordination might be required here. Where the lambda function cannot be created without the zip file existing in the S3 location first. Therefore this may need to be at least uploaded to S3 first before `terraform apply` will complete successfully.*
+
 ### Code
 
 Assuming you are at the root of the repository.
