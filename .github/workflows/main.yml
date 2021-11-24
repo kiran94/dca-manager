@@ -23,5 +23,5 @@ jobs:
           go-version: '^1.17'
 
       - name: Build Project
-        run: go version
+        run: make
 
