@@ -39,6 +39,18 @@ resource "github_actions_secret" "aws_default_region" {
   plaintext_value = var.aws_region
 }
 
+resource "github_actions_secret" "aws_lambda_bucket" {
+  repository      = github_repository.main.name
+  secret_name     = "AWS_LAMBDA_BUCKET"
+  plaintext_value = aws_s3_bucket.main.bucket
+}
+
+resource "github_actions_secret" "aws_lambda_scripts_prefix" {
+  repository      = github_repository.main.name
+  secret_name     = "AWS_LAMBDA_SCRIPT_PREFIX"
+  plaintext_value = local.lambda_s3_scripts_prefix
+}
+
 #Outputs
 
 output "github_repository_ssh_clone_url" {

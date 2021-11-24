@@ -84,6 +84,13 @@ jobs:
       - name: Pack
         run: make pack_lambda
 
-      - name: Deploy
+      - name: Upload
         run: >
           aws s3 cp function.zip s3://${{ secrets.AWS_LAMBDA_BUCKET }}/${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_KEY }}
+
+      - name: Deploy
+        run: >
+          aws lambda update-function-code
+          --function-name ${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_NAME }}
+          --s3-bucket s3://${{ secrets.AWS_LAMBDA_BUCKET }}
+          --s3-key ${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_KEY }}
