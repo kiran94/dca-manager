@@ -87,8 +87,3 @@ jobs:
       - name: Deploy
         run: >
           aws s3 cp function.zip s3://${{ secrets.AWS_LAMBDA_BUCKET }}/${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_KEY }}
-
-
-
-
-
