@@ -4,7 +4,7 @@
       "exchange": "kraken",
       "direction": "buy",
       "ordertype": "market",
-      "volume": "10",
+      "volume": "5",
       "pair": "ADAGBP",
       "validate": true,
       "enabled": true
