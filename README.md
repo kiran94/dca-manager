@@ -18,6 +18,7 @@ cd terraform
 # https://registry.terraform.io/providers/integrations/github/latest/docs#authentication
 
 # The terraform backend configured will also need to be updated
+# The aws region may also need to be updated
 
 terraform init
 
