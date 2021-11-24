@@ -67,3 +67,5 @@ terraform.rc
 
 # Go executable output
 main
+dcs-manager
+data
