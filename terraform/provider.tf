@@ -2,7 +2,7 @@ terraform {
 
   backend "s3" {
     bucket = "terraform-kiran"
-    key = "dca-manager.tfstate"
+    key    = "dca-manager.tfstate"
   }
 
   required_providers {
