@@ -48,8 +48,8 @@ resource "aws_iam_role" "github_action_role" {
           Effect = "Allow"
           Resource = [
             "${aws_s3_bucket.main.arn}",
-            "${aws_s3_bucket.main.arn}/*"
-            # "arn:aws:lambda:***:***:function:${aws_lambda_function.TODO.function_name}"
+            "${aws_s3_bucket.main.arn}/*",
+            "arn:aws:lambda:***:***:function:${aws_lambda_function.execute_orders.function_name}"
           ]
         }
       ]
