@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -15,6 +16,9 @@ const (
 	envLambdaServerPort = "_LAMBDA_SERVER_PORT"
 )
 
+type LambdaEvent struct {
+	Operation string `json:"operation"`
+}
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -40,19 +44,19 @@ func main() {
 			FullTimestamp: true,
 		})
 
-		res, err := HandleRequest(context.TODO(), MyEvent{Name: "Event"})
-		fmt.Println(res)
-		fmt.Println(err)
+		event := LambdaEvent{
+			Operation: "ExecuteOrders",
+		}
+
+		res, err := HandleRequest(context.TODO(), event)
+		fmt.Printf("Result: %s \n", *res)
+		fmt.Errorf("Error: %s \n", err)
 	}
 
 	log.Info("Lambda Execution Done.")
 }
 
-type MyEvent struct {
-	Name string `json:"name"`
-}
-
-func HandleRequest(c context.Context, event MyEvent) (*string, error) {
+func HandleRequest(c context.Context, event LambdaEvent) (*string, error) {
 	log.Info("Starting Handling Request")
 
 	awsConfig, err := awsConfig.LoadDefaultConfig(c)
@@ -60,11 +64,16 @@ func HandleRequest(c context.Context, event MyEvent) (*string, error) {
 		return nil, err
 	}
 
-	err = lambda.ExecuteOrders(&awsConfig, &c)
+	if event.Operation == "ExecuteOrders" {
+		err = lambda.ExecuteOrders(&awsConfig, &c)
+	} else {
+		err = errors.New(fmt.Sprintf("Unconfigured operation: %s", event.Operation))
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-    res := fmt.Sprintf("Hello %s!", event.Name)
+	res := fmt.Sprintf("Operation %s completed successfully.", event.Operation)
 	return &res, nil
 }
