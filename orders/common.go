@@ -10,6 +10,7 @@ type Orderer interface {
 }
 
 type OrderFufilled struct {
-	Timestamp int64       `json:"timestamp"`
-	Result    interface{} `json:"result"`
+	TransactionId string      `json:"transaction_id"`
+	Timestamp     int64       `json:"timestamp"`
+	Result        interface{} `json:"result"`
 }

@@ -1,6 +1,7 @@
 package orders
 
 import (
+	"errors"
 	"time"
 
 	"github.com/beldur/kraken-go-api-client"
@@ -32,8 +33,15 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 
 	log.Infof("Order Response: %s", addOrderResponse)
 
+	if len(addOrderResponse.TransactionIds) > 1 {
+		log.Warnf("Recieved more then one TransactionIds %s", addOrderResponse.TransactionIds)
+	} else if len(addOrderResponse.TransactionIds) == 0 {
+		return nil, errors.New("No Transactions ids recieved")
+	}
+
 	o := OrderFufilled{}
 	o.Result = addOrderResponse
 	o.Timestamp = time.Now().Unix()
+	o.TransactionId = addOrderResponse.TransactionIds[0]
 	return &o, nil
 }
