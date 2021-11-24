@@ -16,6 +16,9 @@ debug:
 terraform_apply:
 	terraform -chdir=terraform apply
 
+terraform_output:
+	terraform -chdir=terraform output
+
 pack_lambda:
 	go get github.com/aws/aws-lambda-go/lambda
 	GOOS=linux go build main.go
