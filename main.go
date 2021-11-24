@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -18,6 +19,7 @@ import (
 
 const (
 	envLambdaServerPort = "_LAMBDA_SERVER_PORT"
+	envAllowReal        = "DCA_ALLOW_REAL"
 )
 
 func main() {
@@ -28,6 +30,7 @@ func main() {
 	lambdaPort := os.Getenv(envLambdaServerPort)
 
 	if lambdaPort != "" {
+        // Running in Lambda
 		log.SetFormatter(&log.TextFormatter{
 			DisableColors: true,
 			FullTimestamp: true,
@@ -37,13 +40,13 @@ func main() {
 		lambda.Start(HandleRequest)
 
 	} else {
+        // Running Locally
 		log.SetFormatter(&log.TextFormatter{
 			DisableColors: false,
 			FullTimestamp: true,
 		})
 
 		res, err := HandleRequest(context.TODO(), MyEvent{Name: "Event"})
-
 		fmt.Println(res)
 		fmt.Println(err)
 	}
@@ -86,46 +89,28 @@ func HandleRequest(c context.Context, event MyEvent) (string, error) {
 	for index, order := range dcaConfig.Orders {
 		log.Debugf("Running Order %s with Exchange %s", index, order.Exchange)
 
-		// REAL
-		exchange := o[order.Exchange]
-		orderResult, orderErr := exchange.MakeOrder(&order)
+		var orderResult *orders.OrderFufilled
+		var orderErr error
 
-		// FAKE
-
-		// orderResult := &orders.OrderFufilled{
-		// 	Result: &krakenapi.AddOrderResponse{
-		// 		TransactionIds: []string{"TXID"},
-		// 		Description: krakenapi.OrderDescription{
-		// 			AssetPair:      "ADAGBP",
-		// 			Close:          "100",
-		// 			Leverage:       "Leverage",
-		// 			Order:          "Order",
-		// 			OrderType:      "OrderType",
-		// 			PrimaryPrice:   "PrimaryPrice",
-		// 			SecondaryPrice: "SecondaryPrice",
-		// 			Type:           "Type",
-		// 		},
-		// 	},
-		// 	Timestamp: 12345678,
-		// }
-
-		// var orderErr error
-
-		////////////////////////////
+		if os.Getenv(envAllowReal) != "" {
+			exchange := o[order.Exchange]
+			orderResult, orderErr = exchange.MakeOrder(&order)
+		} else {
+			orderResult, orderErr = orders.GetFakeOrderFufilled()
+		}
 
 		if orderErr != nil {
 			return "", orderErr
 		}
 
-		const s3transactionPrefix string = "transactions"
-		orderResultInner := (*orderResult).Result.(*krakenapi.AddOrderResponse)
+		const s3transactionPrefix string = "transactions/pending"
 
 		s3Path := fmt.Sprintf(
-			"%s/ordertype=%s/pair=%s/%d.json",
+			"%s/exchange=%s/%s.json",
 			s3transactionPrefix,
-			orderResultInner.Description.OrderType,
-			orderResultInner.Description.AssetPair,
-			(*orderResult).Timestamp)
+			strings.ToLower(order.Exchange),
+			orderResult.TransactionId,
+		)
 
 		orderResultBytes, err := json.Marshal(orderResult)
 		if err != nil {
