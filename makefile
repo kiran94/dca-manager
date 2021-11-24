@@ -6,6 +6,9 @@ build:
 test:
 	go test
 
+lint:
+	go vet
+
 debug:
 	go build -gcflags=all="-N -l" -o $(GO_OUT) ./main.go
 	cgdb $(GO_OUT)

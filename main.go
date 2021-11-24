@@ -50,7 +50,7 @@ func main() {
 
 		res, err := HandleRequest(context.TODO(), event)
 		fmt.Printf("Result: %s \n", *res)
-		fmt.Errorf("Error: %s \n", err)
+		fmt.Printf("Error: %s \n", err)
 	}
 
 	log.Info("Lambda Execution Done.")
