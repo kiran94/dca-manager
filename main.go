@@ -16,10 +16,6 @@ const (
 	envLambdaServerPort = "_LAMBDA_SERVER_PORT"
 )
 
-type LambdaEvent struct {
-	Operation string `json:"operation"`
-}
-
 func main() {
 	log.SetOutput(os.Stdout)
 	log.SetReportCaller(false)
@@ -44,7 +40,7 @@ func main() {
 			FullTimestamp: true,
 		})
 
-		event := LambdaEvent{
+		event := lambda.LambdaEvent{
 			Operation: "ExecuteOrders",
 		}
 
@@ -56,7 +52,7 @@ func main() {
 	log.Info("Lambda Execution Done.")
 }
 
-func HandleRequest(c context.Context, event LambdaEvent) (*string, error) {
+func HandleRequest(c context.Context, event lambda.LambdaEvent) (*string, error) {
 	log.Info("Starting Handling Request")
 
 	awsConfig, err := awsConfig.LoadDefaultConfig(c)
