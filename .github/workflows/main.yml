@@ -92,5 +92,5 @@ jobs:
         run: >
           aws lambda update-function-code
           --function-name ${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_NAME }}
-          --s3-bucket s3://${{ secrets.AWS_LAMBDA_BUCKET }}
+          --s3-bucket ${{ secrets.AWS_LAMBDA_BUCKET }}
           --s3-key ${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_EXECUTE_ORDERS_KEY }}

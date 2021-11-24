@@ -97,3 +97,8 @@ resource "github_actions_secret" "aws_lambda_execute_orders_name" {
   secret_name     = "AWS_LAMBDA_EXECUTE_ORDERS_NAME"
   plaintext_value = aws_lambda_function.execute_orders.function_name
 }
+
+# Outputs
+output "aws_lambda_execute_orders" {
+  value = aws_lambda_function.execute_orders.function_name
+}
