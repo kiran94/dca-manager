@@ -40,3 +40,15 @@ make
 # for debugging
 make debug
 ```
+
+### Running
+
+Once the infrastructure is up you can either run the code locally or via lambda. Locally you can run:
+
+```sh
+go run main.go
+```
+
+This will pull data from a combination of Environment and SSM variables and additionally the config uploaded in S3 to determine what to do.
+
+By default, dcs-manager should not execute real transactions on an exchange without the `DCA_ALLOW_REAL` being set to any value.
