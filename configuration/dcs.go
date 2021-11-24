@@ -13,6 +13,7 @@ import (
 const (
 	EnvS3Bucket     string = "DCA_BUCKET"
 	EnvS3ConfigPath string = "DCA_CONFIG"
+	EnvAllowReal    string = "DCA_ALLOW_REAL"
 )
 
 type DCAConfig struct {

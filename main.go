@@ -19,7 +19,6 @@ import (
 
 const (
 	envLambdaServerPort = "_LAMBDA_SERVER_PORT"
-	envAllowReal        = "DCA_ALLOW_REAL"
 )
 
 func main() {
@@ -92,7 +91,7 @@ func HandleRequest(c context.Context, event MyEvent) (string, error) {
 		var orderResult *orders.OrderFufilled
 		var orderErr error
 
-		if os.Getenv(envAllowReal) != "" {
+		if os.Getenv(configuration.EnvAllowReal) != "" {
 			exchange := o[order.Exchange]
 			orderResult, orderErr = exchange.MakeOrder(&order)
 		} else {
