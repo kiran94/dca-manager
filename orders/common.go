@@ -14,3 +14,10 @@ type OrderFufilled struct {
 	Timestamp     int64       `json:"timestamp"`
 	Result        interface{} `json:"result"`
 }
+
+// Represents an inlight pending order
+type PendingOrders struct {
+	TransactionId string `json:"transaction_id"`
+	S3Bucket      string `json:"s3_bucket"`
+	S3Key         string `json:"s3_key"`
+}

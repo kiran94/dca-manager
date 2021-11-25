@@ -39,6 +39,7 @@ Assuming you are at the root of the repository.
 ```sh
 export DCA_BUCKET=$(terraform -chdir=terraform output -raw bucket)
 export DCA_CONFIG=$(terraform -chdir=terraform output -raw config_path)
+export DCA_PENDING_ORDERS_QUEUE_URL=$(terraform -chdir=terraform output -raw pending_orders_queue_url)
 
 make
 

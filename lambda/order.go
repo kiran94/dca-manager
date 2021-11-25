@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	krakenapi "github.com/beldur/kraken-go-api-client"
-	dcsConfig "github.com/kiran94/dca-manager/configuration"
+	dcaConfig "github.com/kiran94/dca-manager/configuration"
 	"github.com/kiran94/dca-manager/orders"
 	log "github.com/sirupsen/logrus"
 )
@@ -26,14 +29,14 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 	log.Info("Executing Orders")
 
 	// Get DCA Configuration
-	dcaConfig, err := dcsConfig.GetDCAConfiguration(*awsConfig, *context)
+	dcaConf, err := dcaConfig.GetDCAConfiguration(*awsConfig, *context)
 	if err != nil {
 		return err
 	}
-	log.Debug(dcaConfig)
+	log.Debug(dcaConf)
 
 	// Call Kraken API
-	key, secret, ssmErr := dcsConfig.GetKrakenDetails(*awsConfig, *context)
+	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*awsConfig, *context)
 	if ssmErr != nil {
 		return ssmErr
 	}
@@ -45,13 +48,17 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 	}
 
 	// Execute Orders
-	for index, order := range dcaConfig.Orders {
+	s3Client := s3.NewFromConfig(*awsConfig)
+	sqsClient := sqs.NewFromConfig(*awsConfig)
+
+	for index, order := range dcaConf.Orders {
 		log.Debugf("Running Order %s with Exchange %s", index, order.Exchange)
 
 		var orderResult *orders.OrderFufilled
 		var orderErr error
+		allowReal := os.Getenv(dcaConfig.EnvAllowReal) != ""
 
-		if os.Getenv(dcsConfig.EnvAllowReal) != "" {
+		if allowReal {
 			exchange := o[order.Exchange]
 			orderResult, orderErr = exchange.MakeOrder(&order)
 		} else {
@@ -74,8 +81,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 			return err
 		}
 
-		s3Bucket := os.Getenv(dcsConfig.EnvS3Bucket)
-		s3Client := s3.NewFromConfig(*awsConfig)
+		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
 
 		log.Infof("Uploading to Bucket %s, Key %s", s3Bucket, s3Path)
 		s3Client.PutObject(*context, &s3.PutObjectInput{
@@ -83,6 +89,42 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 			Key:    &s3Path,
 			Body:   bytes.NewReader(orderResultBytes),
 		})
+
+		// Submit to SQS
+		po := orders.PendingOrders{
+			TransactionId: orderResult.TransactionId,
+			S3Bucket:      s3Bucket,
+			S3Key:         s3Path,
+		}
+
+		sqsMessageBodyBytes, err := json.Marshal(po)
+		if err != nil {
+			return err
+		}
+
+		sqsMessage := string(sqsMessageBodyBytes)
+		sqsQueue := os.Getenv(dcaConfig.EnvSQSPendingOrdersQueue)
+		sqsMessageInput := &sqs.SendMessageInput{
+			QueueUrl:    &sqsQueue,
+			MessageBody: aws.String(sqsMessage),
+			MessageAttributes: map[string]types.MessageAttributeValue{
+				"Exchange": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String(order.Exchange),
+				},
+				"TransactionId": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String(orderResult.TransactionId),
+				},
+				"Real": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String(strconv.FormatBool(allowReal)),
+				},
+			},
+		}
+
+		log.Infof("Submitting Transaction %s to Queue %s", po.TransactionId, sqsQueue)
+		sqsClient.SendMessage(*context, sqsMessageInput)
 	}
 
 	return nil

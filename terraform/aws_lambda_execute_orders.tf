@@ -20,8 +20,9 @@ resource "aws_lambda_function" "execute_orders" {
   environment {
     variables = {
       "DCA_BUCKET" = aws_s3_bucket.main.bucket
-      "DCA_CONFIG" = aws_s3_bucket_object.config.id
+      "DCA_CONFIG" = aws_s3_bucket_object.config.id,
       # "DCA_ALLOW_REAL" = "1"
+      "DCA_PENDING_ORDERS_QUEUE_URL" = aws_sqs_queue.pending_orders_queue.url
     }
   }
 
@@ -59,7 +60,12 @@ resource "aws_iam_role" "execute_orders_iam_role" {
           Action = [
             "s3:GetObject",
             "s3:PutObject",
-            "ssm:GetParameter"
+            "ssm:GetParameter",
+            "sqs:SendMessage",
+            "sqs:ReceiveMessage",
+            "sqs:DeleteMessage",
+            "sqs:ChangeMessageVisibility",
+            "sqs:GetQueueAttributes"
           ]
           Effect = "Allow"
           Resource = [
@@ -67,6 +73,7 @@ resource "aws_iam_role" "execute_orders_iam_role" {
             "${aws_s3_bucket.main.arn}/*",
             "${aws_ssm_parameter.kraken_api_key.arn}",
             "${aws_ssm_parameter.kraken_api_secret.arn}",
+            "${aws_sqs_queue.pending_orders_queue.arn}"
           ]
         }
       ]
