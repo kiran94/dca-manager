@@ -116,9 +116,9 @@ resource "aws_cloudwatch_event_target" "aws_lambda_execute_orders_schedule_targe
 
   input_transformer {
     input_template = <<EOF
-    {
-      "operation": "ExecuteOrders"
-    }
+{
+  "operation": "ExecuteOrders"
+}
 EOF
   }
 }
