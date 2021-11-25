@@ -27,7 +27,12 @@ resource "aws_lambda_function" "execute_orders" {
   }
 
   lifecycle {
-    ignore_changes = [source_code_hash, source_code_size, layers]
+    ignore_changes = [
+      source_code_hash,
+      source_code_size,
+      layers,
+      last_modified
+    ]
   }
 }
 
