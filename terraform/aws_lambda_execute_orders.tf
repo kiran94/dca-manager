@@ -113,6 +113,14 @@ resource "aws_cloudwatch_event_target" "aws_lambda_execute_orders_schedule_targe
   target_id = "aws_lambda_execute_orders_schedule_target"
   rule      = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule.name
   arn       = aws_lambda_function.execute_orders.arn
+
+  input_transformer {
+    input_template = <<EOF
+    {
+      "operation": "ExecuteOrders"
+    }
+EOF
+  }
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_execute_orders" {
