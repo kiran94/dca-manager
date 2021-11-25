@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	s3transactionPrefix string = "transactions/pending"
+	s3transactionPrefix string = "transactions/status=pending"
 )
 
 // Executes the configured orders.
