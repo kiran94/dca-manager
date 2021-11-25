@@ -105,6 +105,7 @@ resource "aws_cloudwatch_event_rule" "aws_lambda_execute_orders_schedule" {
   description         = "At 6:00AM on every Friday"
   schedule_expression = "cron(* 6 ? * FRI *)"
   # https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
+  # https://docs.aws.amazon.com/lambda/latest/dg/services-cloudwatchevents-expressions.html
 }
 
 resource "aws_cloudwatch_event_target" "aws_lambda_execute_orders_schedule_target" {
