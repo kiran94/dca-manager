@@ -98,6 +98,28 @@ resource "github_actions_secret" "aws_lambda_execute_orders_name" {
   plaintext_value = aws_lambda_function.execute_orders.function_name
 }
 
+# Triggers
+resource "aws_cloudwatch_event_rule" "aws_lambda_execute_orders_schedule" {
+  name                = "aws_lambda_execute_orders_schedule"
+  description         = "At 6:00AM on every Friday"
+  schedule_expression = "cron(* 6 ? * FRI *)"
+  # https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
+}
+
+resource "aws_cloudwatch_event_target" "aws_lambda_execute_orders_schedule_target" {
+  target_id = "aws_lambda_execute_orders_schedule_target"
+  rule      = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule.name
+  arn       = aws_lambda_function.execute_orders.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_execute_orders" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  principal     = "events.amazonaws.com"
+  function_name = aws_lambda_function.execute_orders.function_name
+  source_arn    = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule.arn
+}
+
 # Outputs
 output "aws_lambda_execute_orders" {
   value = aws_lambda_function.execute_orders.function_name
