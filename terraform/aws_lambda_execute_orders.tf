@@ -10,6 +10,7 @@ resource "aws_lambda_function" "execute_orders" {
   handler       = "main"
   runtime       = "go1.x"
   role          = aws_iam_role.execute_orders_iam_role.arn
+  description   = "Executes Orders from the DCS Configuration"
 
 
   s3_bucket = aws_s3_bucket.main.bucket
