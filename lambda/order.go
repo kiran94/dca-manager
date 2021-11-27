@@ -97,34 +97,49 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 			S3Key:         s3Path,
 		}
 
-		sqsMessageBodyBytes, err := json.Marshal(po)
-		if err != nil {
-			return err
+		submitErr := SubmitPendingOrder(sqsClient, &po, context, order.Exchange, allowReal)
+		if submitErr != nil {
+			return submitErr
 		}
+	}
 
-		sqsMessage := string(sqsMessageBodyBytes)
-		sqsQueue := os.Getenv(dcaConfig.EnvSQSPendingOrdersQueue)
-		sqsMessageInput := &sqs.SendMessageInput{
-			QueueUrl:    &sqsQueue,
-			MessageBody: aws.String(sqsMessage),
-			MessageAttributes: map[string]types.MessageAttributeValue{
-				"Exchange": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String(order.Exchange),
-				},
-				"TransactionId": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String(orderResult.TransactionId),
-				},
-				"Real": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String(strconv.FormatBool(allowReal)),
-				},
+	return nil
+}
+
+// Submits the given pending order to queue.
+func SubmitPendingOrder(sc *sqs.Client, po *orders.PendingOrders, c *context.Context, exchange string, real bool) error {
+
+	sqsMessageBodyBytes, err := json.Marshal(po)
+	if err != nil {
+		return err
+	}
+
+	sqsMessage := string(sqsMessageBodyBytes)
+	sqsQueue := os.Getenv(dcaConfig.EnvSQSPendingOrdersQueue)
+	sqsMessageInput := &sqs.SendMessageInput{
+		QueueUrl:    &sqsQueue,
+		MessageBody: aws.String(sqsMessage),
+		MessageAttributes: map[string]types.MessageAttributeValue{
+			"Exchange": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(exchange),
 			},
-		}
+			"TransactionId": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(po.TransactionId),
+			},
+			"Real": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(strconv.FormatBool(real)),
+			},
+		},
+	}
 
-		log.Infof("Submitting Transaction %s to Queue %s", po.TransactionId, sqsQueue)
-		sqsClient.SendMessage(*context, sqsMessageInput)
+	log.Infof("Submitting Transaction %s to Queue %s", po.TransactionId, sqsQueue)
+	_, sqsErr := sc.SendMessage(*c, sqsMessageInput)
+
+	if sqsErr != nil {
+		return sqsErr
 	}
 
 	return nil
