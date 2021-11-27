@@ -23,7 +23,7 @@ type OrderFufilled struct {
 // An order could be accepted by the exchange but not nessasarily
 // successful yet so the payload in s3 is whatever they sent back to us.
 //
-// This object is used to push the trasnaction to an out-of-process
+// This object is used to push the transaction to an out-of-process
 // queue for later processing
 type PendingOrders struct {
 	TransactionId string `json:"transaction_id"`
