@@ -15,3 +15,8 @@ variable "execute_orders_schedules" {
     }
   ]
 }
+
+
+variable "lambda_failure_dlq_email" {
+  type = string
+}
