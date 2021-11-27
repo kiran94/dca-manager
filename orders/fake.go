@@ -5,6 +5,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Generate a Fake Executed Order.
+//
+// Useful for end-to-end testing so we
+// don't need to keep paying money during testing ;)
 func GetFakeOrderFufilled() (*OrderFufilled, error) {
 
 	log.Warn(`USING FAKE DATA. In order to execute real transactions enable the DCA_ALLOW_REAL environment variable.`)

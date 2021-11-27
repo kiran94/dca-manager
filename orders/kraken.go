@@ -17,6 +17,7 @@ func (ko *KrakenOrderer) New(client *krakenapi.KrakenApi) {
 	ko.Client = client
 }
 
+// Execute the given DCA Order on the Kraken Exchange
 func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error) {
 
 	log.Infof("Making Order: %s %s %s (%s)", order.Direction, order.Volume, order.Pair, order.OrderType)
