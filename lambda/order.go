@@ -19,10 +19,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	s3transactionPrefix string = "transactions/status=pending"
-)
-
 // Executes the configured orders.
 func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 
@@ -57,6 +53,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 		var orderResult *orders.OrderFufilled
 		var orderErr error
 		allowReal := os.Getenv(dcaConfig.EnvAllowReal) != ""
+		s3transactionPrefix := os.Getenv(dcaConfig.EnvS3PendingTransaction)
 
 		if allowReal {
 			exchange := o[order.Exchange]

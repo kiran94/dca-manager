@@ -51,6 +51,7 @@ Assuming you are at the root of the repository.
 export DCA_BUCKET=$(terraform -chdir=terraform output -raw bucket)
 export DCA_CONFIG=$(terraform -chdir=terraform output -raw config_path)
 export DCA_PENDING_ORDERS_QUEUE_URL=$(terraform -chdir=terraform output -raw pending_orders_queue_url)
+export DCA_PENDING_ORDER_S3_PREFIX=$(terraform -chdir=terraform output -raw aws_lambda_pending_order_path)
 
 make
 
