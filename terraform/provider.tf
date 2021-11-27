@@ -2,7 +2,7 @@ terraform {
 
   backend "s3" {
     bucket = "terraform-kiran"
-    key = "dca-manager.tfstate"
+    key    = "dca-manager.tfstate"
   }
 
   required_providers {
@@ -19,6 +19,14 @@ terraform {
   }
 }
 
+variable "aws_region" {
+  type    = string
+  default = "eu-west-2"
+}
 
 provider "github" {}
-provider "aws" {}
+provider "aws" {
+  region = var.aws_region
+}
+
+data "aws_caller_identity" "current" {}
