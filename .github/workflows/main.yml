@@ -58,7 +58,7 @@ jobs:
         run: |
           terraform validate -no-color
 
-  deploy:
+  deploy-lambda-execute-orders:
     needs: [build, terraform-lint]
     runs-on: ubuntu-latest
     timeout-minutes: 5
