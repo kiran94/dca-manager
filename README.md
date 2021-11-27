@@ -55,6 +55,6 @@ Once the infrastructure is up you can either run the code locally or via lambda.
 go run main.go
 ```
 
-This will pull data from a combination of Environment and SSM variables and additionally the config uploaded in S3 to determine what to do.
+This will pull data from a combination of sources such as the environment and SSM. Additionally the config uploaded in S3 will be used to determine what to do.
 
 By default, dcs-manager should not execute real transactions on an exchange without the `DCA_ALLOW_REAL` being set to any value.
