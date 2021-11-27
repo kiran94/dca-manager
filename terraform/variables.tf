@@ -1,5 +1,4 @@
 // SCHEDULES
-
 variable "execute_orders_schedules" {
   type = list(object({
     description         = string
@@ -16,7 +15,16 @@ variable "execute_orders_schedules" {
   ]
 }
 
-
+// ALERTS
 variable "lambda_failure_dlq_email" {
-  type = string
+  type = list(string)
+}
+
+// SECRETS
+// Override with TF_VAR_
+variable "KRAKEN_API_KEY" {
+  default = "dummy"
+}
+variable "KRAKEN_API_SECRET" {
+  default = "dummy"
 }
