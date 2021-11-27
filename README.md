@@ -68,3 +68,29 @@ go run main.go
 This will pull data from a combination of sources such as the environment and SSM. Additionally the config uploaded in S3 will be used to determine what to do.
 
 By default, dcs-manager should not execute real transactions on an exchange without the `DCA_ALLOW_REAL` being set to any value.
+
+## Configuration
+
+The configuration drives the orders which are executed regularly. At a given interval of time, the configuration is pulled and the process runs through the list of orders.
+
+For example if you wanted to setup a regular order for 5 `ADAGBP` via kraken then the configuration might look like this:
+
+*config.json*
+
+```json5
+{
+  "orders": [
+    {
+      "exchange": "kraken",
+      "direction": "buy",
+      "ordertype": "market",
+      "volume": "5",
+      "pair": "ADAGBP",
+      "validate": true,
+      "enabled": true
+    }
+  ]
+}
+```
+
+See [example_config.json](./configuration/example_config.json) will by default upload to the designated location in S3 via terraform.
