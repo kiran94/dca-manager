@@ -98,7 +98,7 @@ See [example_config.json](./configuration/example_config.json) will by default u
 
 ## Schedules
 
-Scheduling for execution of new orders can be found in the terraform variable `execute_orders_schedules`. Multple schedules are supported.
+Scheduling for execution of new orders can be found in the terraform variable `execute_orders_schedules`. Multiple schedules are supported.
 
 For example, if we wanted to define a schedule for 6AM UTC on Friday and Wednesday then we could configure this:
 
