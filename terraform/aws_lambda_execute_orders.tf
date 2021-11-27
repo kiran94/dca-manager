@@ -113,16 +113,18 @@ resource "github_actions_secret" "aws_lambda_execute_orders_name" {
 
 # Triggers
 resource "aws_cloudwatch_event_rule" "aws_lambda_execute_orders_schedule" {
-  name                = "aws_lambda_execute_orders_schedule"
-  description         = "At 6:00 UTC on every Friday"
-  schedule_expression = "cron(0 6 ? * FRI *)"
-  # https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
-  # https://docs.aws.amazon.com/lambda/latest/dg/services-cloudwatchevents-expressions.html
+  count = length(var.execute_orders_schedules)
+
+  name                = "aws_lambda_execute_orders_schedule_${count.index}"
+  description         = var.execute_orders_schedules[count.index].description
+  schedule_expression = var.execute_orders_schedules[count.index].schedule_expression
 }
 
 resource "aws_cloudwatch_event_target" "aws_lambda_execute_orders_schedule_target" {
+  count = length(var.execute_orders_schedules)
+
   target_id = "aws_lambda_execute_orders_schedule_target"
-  rule      = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule.name
+  rule      = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule[count.index].name
   arn       = aws_lambda_function.execute_orders.arn
 
   input_transformer {
@@ -135,11 +137,13 @@ EOF
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_execute_orders" {
-  statement_id  = "AllowExecutionFromCloudWatch"
+  count = length(var.execute_orders_schedules)
+
+  statement_id  = "AllowExecutionFromCloudWatch_${count.index}"
   action        = "lambda:InvokeFunction"
   principal     = "events.amazonaws.com"
   function_name = aws_lambda_function.execute_orders.function_name
-  source_arn    = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule.arn
+  source_arn    = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule[count.index].arn
 }
 
 # Outputs
