@@ -12,10 +12,6 @@ variable "execute_orders_schedules" {
     {
       description         = "At 6:00 UTC on every Friday"
       schedule_expression = "cron(0 6 ? * FRI *)"
-    },
-    {
-      description         = "At 6:00 UTC on every Wednesday"
-      schedule_expression = "cron(0 6 ? * WED *)"
     }
   ]
 }
