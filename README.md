@@ -4,6 +4,16 @@
 
 Dollar Cost Average Manager
 
+<!-- toc GFM -->
+
+* [Getting Started](#getting-started)
+    * [Infrastructure](#infrastructure)
+    * [Code](#code)
+    * [Running](#running)
+* [Configuration](#configuration)
+
+<!-- /toc -->
+
 ## Getting Started
 
 ### Infrastructure
