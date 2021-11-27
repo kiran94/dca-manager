@@ -12,8 +12,7 @@ var (
 	SSMKrakenSecret string = "/dca-manager/kraken/secret"
 )
 
-// Gets the Kraken Key and Secret
-// from AWS SSM
+// Gets the Kraken Key and Secret from AWS SSM
 func GetKrakenDetails(config aws.Config, context context.Context) (key *string, secret *string, error error) {
 	ssmClient := ssm.NewFromConfig(config)
 

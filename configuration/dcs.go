@@ -17,10 +17,12 @@ const (
 	EnvSQSPendingOrdersQueue string = "DCA_PENDING_ORDERS_QUEUE_URL"
 )
 
+// The root object for DCA configuration
 type DCAConfig struct {
 	Orders []DCAOrder `json:"orders"`
 }
 
+// A single order to be executed by DCA
 type DCAOrder struct {
 	Exchange  string `json:"exchange"`
 	Direction string `json:"direction"`
