@@ -38,6 +38,18 @@ resource "aws_lambda_function" "execute_orders" {
   }
 }
 
+resource "aws_lambda_function_event_invoke_config" "lambda_failure_dlq" {
+  function_name                = aws_lambda_function.execute_orders.function_name
+  maximum_event_age_in_seconds = 60
+  maximum_retry_attempts       = 0
+
+  destination_config {
+    on_failure {
+      destination = aws_sns_topic.lambda_failure_dlq.arn
+    }
+  }
+}
+
 # IAM Role
 resource "aws_iam_role" "execute_orders_iam_role" {
   name = "execute_orders_iam_role"
@@ -68,6 +80,7 @@ resource "aws_iam_role" "execute_orders_iam_role" {
             "s3:GetObject",
             "s3:PutObject",
             "ssm:GetParameter",
+            "sns:Publish",
             "sqs:SendMessage",
             "sqs:ReceiveMessage",
             "sqs:DeleteMessage",
@@ -80,7 +93,8 @@ resource "aws_iam_role" "execute_orders_iam_role" {
             "${aws_s3_bucket.main.arn}/*",
             "${aws_ssm_parameter.kraken_api_key.arn}",
             "${aws_ssm_parameter.kraken_api_secret.arn}",
-            "${aws_sqs_queue.pending_orders_queue.arn}"
+            "${aws_sqs_queue.pending_orders_queue.arn}",
+            "${aws_sns_topic.lambda_failure_dlq.arn}"
           ]
         }
       ]
@@ -128,6 +142,11 @@ resource "aws_cloudwatch_event_target" "aws_lambda_execute_orders_schedule_targe
   target_id = "aws_lambda_execute_orders_schedule_target"
   rule      = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule[count.index].name
   arn       = aws_lambda_function.execute_orders.arn
+
+  retry_policy {
+    maximum_retry_attempts       = 0
+    maximum_event_age_in_seconds = 60
+  }
 
   input_transformer {
     input_template = <<EOF

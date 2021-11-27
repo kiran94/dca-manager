@@ -17,11 +17,3 @@ resource "aws_ssm_parameter" "kraken_api_secret" {
     ignore_changes = all
   }
 }
-
-# Override with TF_VAR_
-variable "KRAKEN_API_KEY" {
-  default = "dummy"
-}
-variable "KRAKEN_API_SECRET" {
-  default = "dummy"
-}
