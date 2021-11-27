@@ -11,6 +11,7 @@ Dollar Cost Average Manager
     * [Code](#code)
     * [Running](#running)
 * [Configuration](#configuration)
+* [Schedules](#schedules)
 
 <!-- /toc -->
 
@@ -94,3 +95,33 @@ For example if you wanted to setup a regular order for 5 `ADAGBP` via kraken the
 ```
 
 See [example_config.json](./configuration/example_config.json) will by default upload to the designated location in S3 via terraform.
+
+## Schedules
+
+Scheduling for execution of new orders can be found in the terraform variable `execute_orders_schedules`. Multple schedules are supported.
+
+For example, if we wanted to define a schedule for 6AM UTC on Friday and Wednesday then we could configure this:
+
+```terraform
+variable "execute_orders_schedules" {
+  type = list(object({
+    description         = string
+    schedule_expression = string
+  }))
+
+  default = [
+    {
+      description         = "At 6:00 UTC on every Friday"
+      schedule_expression = "cron(0 6 ? * FRI *)"
+    },
+    {
+      description         = "At 6:00 UTC on every Wednesday"
+      schedule_expression = "cron(0 6 ? * WED *)"
+    }
+  ]
+}
+```
+
+See [AWS Schedule Expressions](https://docs.aws.amazon.com/lambda/latest/dg/services-cloudwatchevents-expressions.html) for all the supported options.
+
+See [variables.tf](./terraform/variables.tf)
