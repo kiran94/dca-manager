@@ -15,6 +15,7 @@ const (
 	EnvS3ConfigPath          string = "DCA_CONFIG"
 	EnvAllowReal             string = "DCA_ALLOW_REAL"
 	EnvSQSPendingOrdersQueue string = "DCA_PENDING_ORDERS_QUEUE_URL"
+	EnvS3PendingTransaction  string = "DCA_PENDING_ORDER_S3_PREFIX"
 )
 
 // The root object for DCA configuration

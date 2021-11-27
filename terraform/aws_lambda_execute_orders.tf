@@ -1,7 +1,8 @@
 locals {
-  lambda_s3_scripts_prefix            = "scripts"
-  lambda_cloudwatch_default_retention = 7
-  lambda_execute_order_object         = "dcs-execute-orders.zip"
+  lambda_s3_scripts_prefix             = "scripts"
+  lambda_cloudwatch_default_retention  = 7
+  lambda_execute_order_object          = "dcs-execute-orders.zip"
+  lambda_s3_pending_transaction_prefix = "transactions/status=pending"
 }
 
 # Lambda
@@ -22,7 +23,8 @@ resource "aws_lambda_function" "execute_orders" {
       "DCA_BUCKET" = aws_s3_bucket.main.bucket
       "DCA_CONFIG" = aws_s3_bucket_object.config.id,
       # "DCA_ALLOW_REAL" = "1"
-      "DCA_PENDING_ORDERS_QUEUE_URL" = aws_sqs_queue.pending_orders_queue.url
+      "DCA_PENDING_ORDERS_QUEUE_URL" = aws_sqs_queue.pending_orders_queue.url,
+      "DCA_PENDING_ORDER_S3_PREFIX"  = local.lambda_s3_pending_transaction_prefix
     }
   }
 
@@ -149,4 +151,8 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_execute_orders" {
 # Outputs
 output "aws_lambda_execute_orders" {
   value = aws_lambda_function.execute_orders.function_name
+}
+
+output "aws_lambda_pending_order_path" {
+  value = local.lambda_s3_pending_transaction_prefix
 }
