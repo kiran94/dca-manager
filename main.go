@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -80,7 +79,7 @@ func HandleRequest(c context.Context, event lambda.LambdaEvent) (*string, error)
 	} else if event.Operation == "ProcessTransaction" {
 		err = lambda.ProcessTransactions(&awsConfig, &c)
 	} else {
-		err = errors.New(fmt.Sprintf("Unconfigured operation: %s", event.Operation))
+		err = fmt.Errorf("Unconfigured operation: %s", event.Operation)
 	}
 
 	if err != nil {
