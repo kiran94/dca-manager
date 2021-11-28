@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -40,8 +41,13 @@ func main() {
 			FullTimestamp: true,
 		})
 
+		operation := flag.String("operation", "ExecuteOrders", "The Operation to Execute")
+		flag.Parse()
+
 		event := lambda.LambdaEvent{
-			Operation: "ExecuteOrders",
+			// Operation: "ExecuteOrders",
+			// Operation: "ProcessTransaction",
+			Operation: *operation,
 		}
 
 		res, err := HandleRequest(context.TODO(), event)
