@@ -51,8 +51,17 @@ func main() {
 		}
 
 		res, err := HandleRequest(context.TODO(), event)
-		fmt.Printf("Result: %s \n", *res)
-		fmt.Printf("Error: %s \n", err)
+		if res != nil {
+			fmt.Printf("Result: %s \n", *res)
+		} else {
+			fmt.Println("Result was nil")
+		}
+
+		if err != nil {
+			fmt.Printf("Error: %s \n", err)
+		} else {
+			log.Debug("Error was null")
+		}
 	}
 
 	log.Info("Lambda Execution Done.")
@@ -68,6 +77,8 @@ func HandleRequest(c context.Context, event lambda.LambdaEvent) (*string, error)
 
 	if event.Operation == "ExecuteOrders" {
 		err = lambda.ExecuteOrders(&awsConfig, &c)
+	} else if event.Operation == "ProcessTransaction" {
+		err = lambda.ProcessTransactions(&awsConfig, &c)
 	} else {
 		err = errors.New(fmt.Sprintf("Unconfigured operation: %s", event.Operation))
 	}
