@@ -24,6 +24,7 @@ require (
 	github.com/aws/smithy-go v1.9.0 // indirect
 	github.com/beldur/kraken-go-api-client v0.0.0-20210512194559-2c29669c4ecc // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
 )

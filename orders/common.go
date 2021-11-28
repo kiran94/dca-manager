@@ -2,11 +2,13 @@ package orders
 
 import (
 	config "github.com/kiran94/dca-manager/configuration"
+	"github.com/shopspring/decimal"
 )
 
 // Responsible for making DCA orders to an Exchange.
 type Orderer interface {
 	MakeOrder(order *config.DCAOrder) (*OrderFufilled, error)
+	ProcessTransaction(transactionsIds ...string) (*[]OrderComplete, error)
 }
 
 // An Order which has been sent to the Exchange
