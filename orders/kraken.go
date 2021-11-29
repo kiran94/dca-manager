@@ -64,7 +64,7 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 		return nil, err
 	}
 
-	completeOrders := make([]OrderComplete, 1)
+	completeOrders := make([]OrderComplete, len(transactionId))
 
 	log.Info("Mapping back response to transactions")
 	for transactionId := range *transactions {
