@@ -20,6 +20,10 @@ variable "lambda_failure_dlq_email" {
   type = list(string)
 }
 
+variable "lambda_success_email" {
+  type = list(string)
+}
+
 // SECRETS
 // Override with TF_VAR_
 variable "KRAKEN_API_KEY" {

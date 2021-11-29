@@ -25,6 +25,7 @@ Assuming you are at the root of the repository.
 export TF_VAR_KRAKEN_API_KEY=your_key
 export TF_VAR_KRAKEN_API_SECRET=your_secret
 export TF_VAR_lambda_failure_dlq_email='["you@email.com"]'
+export TF_VAR_lambda_success_email='["you@email.com"]'
 
 cd terraform
 

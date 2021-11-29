@@ -49,6 +49,10 @@ resource "aws_lambda_function_event_invoke_config" "lambda_failure_dlq" {
     on_failure {
       destination = aws_sns_topic.lambda_failure_dlq.arn
     }
+
+    on_success {
+      destination = aws_sns_topic.lambda_success.arn
+    }
   }
 }
 
@@ -96,7 +100,8 @@ resource "aws_iam_role" "execute_orders_iam_role" {
             "${aws_ssm_parameter.kraken_api_key.arn}",
             "${aws_ssm_parameter.kraken_api_secret.arn}",
             "${aws_sqs_queue.pending_orders_queue.arn}",
-            "${aws_sns_topic.lambda_failure_dlq.arn}"
+            "${aws_sns_topic.lambda_failure_dlq.arn}",
+            "${aws_sns_topic.lambda_success.arn}"
           ]
         }
       ]
