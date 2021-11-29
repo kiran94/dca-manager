@@ -49,7 +49,8 @@ resource "aws_iam_role" "github_action_role" {
           Resource = [
             "${aws_s3_bucket.main.arn}",
             "${aws_s3_bucket.main.arn}/*",
-            "arn:aws:lambda:***:***:function:${aws_lambda_function.execute_orders.function_name}"
+            "arn:aws:lambda:***:***:function:${aws_lambda_function.execute_orders.function_name}",
+            "arn:aws:lambda:***:***:function:${aws_lambda_function.process_orders.function_name}"
           ]
         }
       ]
