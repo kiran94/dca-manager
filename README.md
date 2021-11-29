@@ -73,7 +73,7 @@ go run main.go
 
 This will pull data from a combination of sources such as the environment and SSM. Additionally the config uploaded in S3 will be used to determine what to do.
 
-By default, dcs-manager should not execute real transactions on an exchange without the `DCA_ALLOW_REAL` being set to any value.
+By default, dca-manager should not execute real transactions on an exchange without the `DCA_ALLOW_REAL` being set to any value.
 
 ## Configuration
 
