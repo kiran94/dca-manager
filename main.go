@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
+	// "time"
 
 	awsEvents "github.com/aws/aws-lambda-go/events"
 	awsLambda "github.com/aws/aws-lambda-go/lambda"
@@ -47,7 +47,7 @@ func main() {
 	log.Info("Lambda Execution Done.")
 }
 
-func HandleRequest(c context.Context, event interface{}) (*string, error) {
+func HandleRequest(c context.Context, event awsEvents.SQSEvent) (*string, error) {
 	log.Info("Starting Handling Request")
 
 	awsConfig, err := awsConfig.LoadDefaultConfig(c)
@@ -59,8 +59,8 @@ func HandleRequest(c context.Context, event interface{}) (*string, error) {
 		err = lambda.ExecuteOrders(&awsConfig, &c)
 	} else if operation == "PROCESS_TRANSACTIONS" {
 		log.Infof("Recieved Event %s", event)
-		sqsEvent := event.(awsEvents.SQSEvent)
-		err = lambda.ProcessTransactions(&awsConfig, &c, sqsEvent)
+		// sqsEvent := event.(awsEvents.SQSEvent)
+		err = lambda.ProcessTransactions(&awsConfig, &c, event)
 	} else {
 		err = fmt.Errorf("Unconfigured operation: %s", operation)
 	}
@@ -86,19 +86,19 @@ func HandleRequestLocally() {
 
 	if operation == "EXECUTE_ORDERS" {
 
-		event := awsEvents.CloudWatchEvent{
-			Version:    "",
-			ID:         "",
-			DetailType: "",
-			Source:     "",
-			AccountID:  "",
-			Time:       time.Time{},
-			Region:     "",
-			Resources:  []string{},
-			Detail:     []byte{},
-		}
+		// event := awsEvents.CloudWatchEvent{
+		// 	Version:    "",
+		// 	ID:         "",
+		// 	DetailType: "",
+		// 	Source:     "",
+		// 	AccountID:  "",
+		// 	Time:       time.Time{},
+		// 	Region:     "",
+		// 	Resources:  []string{},
+		// 	Detail:     []byte{},
+		// }
 
-		res, err = HandleRequest(context.TODO(), event)
+		res, err = HandleRequest(context.TODO(), awsEvents.SQSEvent{})
 
 	} else if operation == "PROCESS_TRANSACTIONS" {
 
