@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	awsEvents "github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -25,7 +26,7 @@ var (
 // Process Pending Transactions in the Queue.
 // Pulls from the Queue and gets the details from the downstream Exchange.
 // Pushes the details to S3 and marks as done from the Queue.
-func ProcessTransactions(awsConfig *aws.Config, context *context.Context) error {
+func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEvent awsEvents.SQSEvent) error {
 	log.Info("Getting Transaction Details")
 
 	// Call Kraken API
@@ -42,30 +43,15 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context) error 
 
 	s3Client := s3.NewFromConfig(*awsConfig)
 	sqsClient := sqs.NewFromConfig(*awsConfig)
-	sqsQueue := os.Getenv(dcaConfig.EnvSQSPendingOrdersQueue)
 
-	sqsAttributes := []*string{&exchangeAttribute, &realAttribute}
-	sqsRecieveMessage := &sqs.ReceiveMessageInput{
-		QueueUrl:              &sqsQueue,
-		MessageAttributeNames: aws.ToStringSlice(sqsAttributes),
-		VisibilityTimeout:     60,
-	}
-
-	// Get Messages from Queue
-	log.Infof("Getting Messages from %s", sqsQueue)
-	sqsResponse, err := sqsClient.ReceiveMessage(*context, sqsRecieveMessage)
-	if err != nil {
-		return err
-	}
-
-	if len(sqsResponse.Messages) == 0 {
+	if len(sqsEvent.Records) == 0 {
 		log.Warn("No SQS Messages found, returning")
 		return nil
 	}
 
-	// For each of the SQS Messages
-	for _, message := range sqsResponse.Messages {
-		log.Infof("Processing SQS Message: %s", *message.MessageId)
+	// Process Each of the SQS Messages
+	for _, message := range sqsEvent.Records {
+		log.Infof("Processing SQS Message: %s from %s", message.MessageId, message.EventSourceARN)
 
 		// Extract Details from the Message
 		exchange := message.MessageAttributes[exchangeAttribute]
@@ -73,31 +59,30 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context) error 
 
 		// If the message is a fake/testing message, mark as deleted and continue
 		if *realAtt.StringValue == "false" {
-			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s", *message.MessageId)
+			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s", message.MessageId)
 			sqsClient.DeleteMessage(*context, &sqs.DeleteMessageInput{
-				QueueUrl:      &sqsQueue,
-				ReceiptHandle: message.ReceiptHandle,
+				QueueUrl:      &message.EventSourceARN,
+				ReceiptHandle: &message.ReceiptHandle,
 			})
 
 			continue
 		}
 
 		if exchange.StringValue == nil {
-			log.Warnf("Recieved SQS message with no Exchange Set. Skipping MessageId: %s", *message.MessageId)
+			log.Warnf("Recieved SQS message with no Exchange Set. Skipping MessageId: %s", message.MessageId)
 			continue
 		}
 
-		messageBytes := []byte(*message.Body)
+		messageBytes := []byte(message.Body)
 
 		var po orders.PendingOrders
 		err := json.Unmarshal(messageBytes, &po)
 		if err != nil {
-			log.Error("Unable to unmarshal json from Message %s", *message.MessageId)
+			log.Error("Unable to unmarshal json from Message %s", message.MessageId)
 			return err
 		}
 
 		// Process the Transaction
-
 		log.Infof("Processing Exchange: %s, Transactions: %s", *exchange.StringValue, po.TransactionId)
 		orders, err := o[*exchange.StringValue].ProcessTransaction(po.TransactionId)
 		if err != nil {
@@ -107,7 +92,6 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context) error 
 		log.Debugf("Orders from processed transactions: %s", orders)
 
 		// Upload Details to S3
-
 		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
 		s3Path := os.Getenv(dcaConfig.EnvS3ProcessedTransaction)
 
@@ -139,10 +123,10 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context) error 
 		}
 
 		// Delete from Queue
-		log.Infof("Deleting MessageId %s", *message.MessageId)
+		log.Infof("Deleting MessageId %s", message.MessageId)
 		sqsClient.DeleteMessage(*context, &sqs.DeleteMessageInput{
-			QueueUrl:      &sqsQueue,
-			ReceiptHandle: message.ReceiptHandle,
+			QueueUrl:      &message.EventSourceARN,
+			ReceiptHandle: &message.ReceiptHandle,
 		})
 	}
 
