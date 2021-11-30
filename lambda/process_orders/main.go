@@ -1,4 +1,4 @@
-package lambda
+package main
 
 import (
 	"bytes"
@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	awsEvents "github.com/aws/aws-lambda-go/events"
+	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	krakenapi "github.com/beldur/kraken-go-api-client"
@@ -22,6 +24,38 @@ var (
 	exchangeAttribute string = "Exchange"
 	realAttribute     string = "Real"
 )
+
+func main() {
+	log.SetOutput(os.Stdout)
+	log.SetReportCaller(false)
+	log.Info("Lambda Execution Starting")
+
+	if os.Getenv("_LAMBDA_SERVER_PORT") != "" {
+
+		log.SetFormatter(&log.TextFormatter{
+			DisableColors: true,
+			FullTimestamp: true,
+		})
+		log.SetFormatter(&log.JSONFormatter{})
+
+		awsLambda.Start(HandleRequest)
+
+	} else {
+		HandleRequestLocally()
+	}
+
+	log.Info("Lambda Execution Done.")
+}
+
+func HandleRequest(c context.Context, event awsEvents.SQSEvent) (*string, error) {
+	awsConfig, err := awsConfig.LoadDefaultConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ProcessTransactions(&awsConfig, &c, event)
+	return nil, err
+}
 
 // Process Pending Transactions in the Queue.
 // Pulls from the Queue and gets the details from the downstream Exchange.
@@ -131,4 +165,41 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 	}
 
 	return nil
+}
+
+func HandleRequestLocally() {
+	event := awsEvents.SQSEvent{
+		Records: []awsEvents.SQSMessage{
+			{
+				MessageId:              "9dd0b57-b21e-4ac1-bd88-01bbb068cb78",
+				ReceiptHandle:          "MessageReceiptHandle",
+				Body:                   "",
+				Md5OfBody:              "",
+				Md5OfMessageAttributes: "",
+				Attributes:             map[string]string{},
+				MessageAttributes: map[string]awsEvents.SQSMessageAttribute{
+					"Exchange": {
+						DataType:    *aws.String("String"),
+						StringValue: aws.String("exchange"),
+					},
+					"Real": {
+						DataType:    *aws.String("String"),
+						StringValue: aws.String("false"),
+					},
+				},
+				EventSourceARN: "",
+				EventSource:    "",
+				AWSRegion:      "",
+			},
+		},
+	}
+
+	res, err := HandleRequest(context.TODO(), event)
+	if res != nil {
+		fmt.Printf("Result: %s \n", *res)
+	}
+
+	if err != nil {
+		fmt.Printf("Error: %s \n", err)
+	}
 }

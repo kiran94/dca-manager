@@ -82,7 +82,7 @@ jobs:
           role-session-name: "GithubAction"
 
       - name: Pack
-        run: make pack_lambda
+        run: make pack_execute_orders
 
       - name: Upload
         run: >
@@ -119,7 +119,7 @@ jobs:
           role-session-name: "GithubAction"
 
       - name: Pack
-        run: make pack_lambda
+        run: make pack_lambda_process_orders
 
       - name: Upload
         run: >

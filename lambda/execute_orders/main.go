@@ -1,4 +1,4 @@
-package lambda
+package main
 
 import (
 	"bytes"
@@ -8,8 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	awsEvents "github.com/aws/aws-lambda-go/events"
+	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -19,9 +23,40 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func main() {
+	log.SetOutput(os.Stdout)
+	log.SetReportCaller(false)
+	log.Info("Lambda Execution Starting")
+
+	if os.Getenv("_LAMBDA_SERVER_PORT") != "" {
+
+		log.SetFormatter(&log.TextFormatter{
+			DisableColors: true,
+			FullTimestamp: true,
+		})
+		log.SetFormatter(&log.JSONFormatter{})
+
+		awsLambda.Start(HandleRequest)
+
+	} else {
+		HandleRequestLocally()
+	}
+
+	log.Info("Lambda Execution Done.")
+}
+
+func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string, error) {
+	awsConfig, err := awsConfig.LoadDefaultConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ExecuteOrders(&awsConfig, &c)
+	return nil, err
+}
+
 // Executes the configured orders.
 func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
-
 	log.Info("Executing Orders")
 
 	// Get DCA Configuration
@@ -105,7 +140,6 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 
 // Submits the given pending order to queue.
 func SubmitPendingOrder(sc *sqs.Client, po *orders.PendingOrders, c *context.Context, exchange string, real bool) error {
-
 	sqsMessageBodyBytes, err := json.Marshal(po)
 	if err != nil {
 		return err
@@ -140,4 +174,28 @@ func SubmitPendingOrder(sc *sqs.Client, po *orders.PendingOrders, c *context.Con
 	}
 
 	return nil
+}
+
+func HandleRequestLocally() {
+	event := awsEvents.CloudWatchEvent{
+		Version:    "",
+		ID:         "",
+		DetailType: "",
+		Source:     "",
+		AccountID:  "",
+		Time:       time.Time{},
+		Region:     "",
+		Resources:  []string{},
+		Detail:     []byte{},
+	}
+
+	res, err := HandleRequest(context.TODO(), event)
+
+    if res != nil {
+        fmt.Printf("Result: %s \n", *res)
+    }
+
+    if err != nil {
+        fmt.Printf("Error: %s \n", err)
+    }
 }
