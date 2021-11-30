@@ -1,5 +1,3 @@
-# TODO: Wire up a SQS Trigger and refactor the main.go to take the SQS event.
-
 # Lambda
 resource "aws_lambda_function" "process_orders" {
   function_name = "dcs-process-orders"
