@@ -58,7 +58,7 @@ func HandleRequest(c context.Context, event awsEvents.SQSEvent) (*string, error)
 	if operation == "EXECUTE_ORDERS" {
 		err = lambda.ExecuteOrders(&awsConfig, &c)
 	} else if operation == "PROCESS_TRANSACTIONS" {
-		log.Infof("Recieved Event %s", event)
+		// log.Infof("Recieved Event %s", event)
 		// sqsEvent := event.(awsEvents.SQSEvent)
 		err = lambda.ProcessTransactions(&awsConfig, &c, event)
 	} else {
