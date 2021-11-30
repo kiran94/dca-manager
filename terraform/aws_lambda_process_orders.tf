@@ -16,7 +16,8 @@ resource "aws_lambda_function" "process_orders" {
     variables = {
       "DCA_BUCKET"                    = aws_s3_bucket.main.bucket
       "DCA_PENDING_ORDER_S3_PREFIX"   = local.lambda_s3_pending_transaction_prefix
-      "DCA_PROCESSED_ORDER_S3_PREFIX" = local.lambda_s3_processed_transaction_prefix
+      "DCA_PROCESSED_ORDER_S3_PREFIX" = local.lambda_s3_processed_transaction_prefix,
+      "DCA_OPERATION"                 = "PROCESS_TRANSACTIONS"
     }
   }
 

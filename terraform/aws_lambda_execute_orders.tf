@@ -22,11 +22,12 @@ resource "aws_lambda_function" "execute_orders" {
 
   environment {
     variables = {
-      "DCA_BUCKET" = aws_s3_bucket.main.bucket
-      "DCA_CONFIG" = aws_s3_bucket_object.config.id,
-      # "DCA_ALLOW_REAL" = "1"
+      "DCA_BUCKET"                   = aws_s3_bucket.main.bucket
+      "DCA_CONFIG"                   = aws_s3_bucket_object.config.id,
+      "DCA_ALLOW_REAL"               = "1"
       "DCA_PENDING_ORDERS_QUEUE_URL" = aws_sqs_queue.pending_orders_queue.url,
-      "DCA_PENDING_ORDER_S3_PREFIX"  = local.lambda_s3_pending_transaction_prefix
+      "DCA_PENDING_ORDER_S3_PREFIX"  = local.lambda_s3_pending_transaction_prefix,
+      "DCA_OPERATION"                = "EXECUTE_ORDERS"
     }
   }
 
