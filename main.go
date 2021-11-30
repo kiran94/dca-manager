@@ -58,6 +58,7 @@ func HandleRequest(c context.Context, event interface{}) (*string, error) {
 	if operation == "EXECUTE_ORDERS" {
 		err = lambda.ExecuteOrders(&awsConfig, &c)
 	} else if operation == "PROCESS_TRANSACTIONS" {
+		log.Infof("Recieved Event %s", event)
 		sqsEvent := event.(awsEvents.SQSEvent)
 		err = lambda.ProcessTransactions(&awsConfig, &c, sqsEvent)
 	} else {
@@ -110,19 +111,19 @@ func HandleRequestLocally() {
 					Md5OfBody:              "",
 					Md5OfMessageAttributes: "",
 					Attributes:             map[string]string{},
-                    MessageAttributes:      map[string]awsEvents.SQSMessageAttribute{
-                        "Exchange": {
-                            DataType: *aws.String("String"),
-                            StringValue: aws.String("exchange"),
-                        },
-                        "Real": {
-                            DataType: *aws.String("String"),
-                            StringValue: aws.String("false"),
-                        },
-                    },
-					EventSourceARN:         "",
-					EventSource:            "",
-					AWSRegion:              "",
+					MessageAttributes: map[string]awsEvents.SQSMessageAttribute{
+						"Exchange": {
+							DataType:    *aws.String("String"),
+							StringValue: aws.String("exchange"),
+						},
+						"Real": {
+							DataType:    *aws.String("String"),
+							StringValue: aws.String("false"),
+						},
+					},
+					EventSourceARN: "",
+					EventSource:    "",
+					AWSRegion:      "",
 				},
 			},
 		}
