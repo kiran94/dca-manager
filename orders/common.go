@@ -41,10 +41,10 @@ type OrderComplete struct {
 	ExchangeStatus string          `json:"exchange_status"`
 	Pair           string          `json:"pair"`
 	OrderType      string          `json:"order_type"`
-	Type           string          `json:type`
+	Type           string          `json:"type"`
 	Price          decimal.Decimal `json:"price"`
 	Fee            decimal.Decimal `json:"fee"`
 	Volume         decimal.Decimal `json:"volume"`
 	OpenTime       float64         `json:"open_time"`
-	CloseTime      float64         `json:close_time`
+	CloseTime      float64         `json:"close_time"`
 }

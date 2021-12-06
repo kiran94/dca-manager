@@ -45,31 +45,42 @@ func main() {
 	log.Info("Lambda Execution Done.")
 }
 
+
 func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string, error) {
 	awsConfig, err := awsConfig.LoadDefaultConfig(c)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ExecuteOrders(&awsConfig, &c)
-	return nil, err
+	pendingOrders, err := ExecuteOrders(&awsConfig, &c)
+	if err != nil {
+		return nil, err
+	}
+
+	serialisedOrders, err := json.Marshal(*pendingOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	serialisedOrdersString := string(serialisedOrders)
+	return &serialisedOrdersString, err
 }
 
 // Executes the configured orders.
-func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
+func ExecuteOrders(awsConfig *aws.Config, context *context.Context) (*[]orders.PendingOrders, error) {
 	log.Info("Executing Orders")
 
 	// Get DCA Configuration
 	dcaConf, err := dcaConfig.GetDCAConfiguration(*awsConfig, *context)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Debug(dcaConf)
 
 	// Call Kraken API
 	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*awsConfig, *context)
 	if ssmErr != nil {
-		return ssmErr
+		return nil, ssmErr
 	}
 
 	// Create Orders (per Exchange)
@@ -81,6 +92,8 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 	// Execute Orders
 	s3Client := s3.NewFromConfig(*awsConfig)
 	sqsClient := sqs.NewFromConfig(*awsConfig)
+
+	submittedPendingOrders := make([]orders.PendingOrders, len(dcaConf.Orders))
 
 	for index, order := range dcaConf.Orders {
 		log.Debugf("Running Order %s with Exchange %s", index, order.Exchange)
@@ -98,7 +111,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 		}
 
 		if orderErr != nil {
-			return orderErr
+			return nil, orderErr
 		}
 
 		s3Path := fmt.Sprintf(
@@ -110,7 +123,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 
 		orderResultBytes, err := json.Marshal(orderResult)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
@@ -131,11 +144,13 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 
 		submitErr := SubmitPendingOrder(sqsClient, &po, context, order.Exchange, allowReal)
 		if submitErr != nil {
-			return submitErr
+			return nil, submitErr
 		}
+
+		submittedPendingOrders = append(submittedPendingOrders, po)
 	}
 
-	return nil
+	return &submittedPendingOrders, nil
 }
 
 // Submits the given pending order to queue.
@@ -191,11 +206,11 @@ func HandleRequestLocally() {
 
 	res, err := HandleRequest(context.TODO(), event)
 
-    if res != nil {
-        fmt.Printf("Result: %s \n", *res)
-    }
+	if res != nil {
+		log.Infof("Result: %s \n", *res)
+	}
 
-    if err != nil {
-        fmt.Printf("Error: %s \n", err)
-    }
+	if err != nil {
+		log.Errorf("Error: %s \n", err)
+	}
 }
