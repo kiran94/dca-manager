@@ -1,6 +1,6 @@
 resource "aws_sqs_queue" "pending_orders_queue" {
   name                       = "dcs-pending-orders-queue"
-  visibility_timeout_seconds = 600
+  visibility_timeout_seconds = 30
   message_retention_seconds  = 1209600
 }
 

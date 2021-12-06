@@ -1,7 +1,12 @@
 GO_OUT=main
 
-build:
-	go build -o main main.go
+build: build_execute_orders build_process_orders
+
+build_execute_orders:
+	go build -o main lambda/execute_orders/main.go
+
+build_process_orders:
+	go build -o main lambda/process_orders/main.go
 
 test:
 	go test
@@ -19,7 +24,12 @@ terraform_apply:
 terraform_output:
 	terraform -chdir=terraform output
 
-pack_lambda:
+pack_execute_orders:
 	go get github.com/aws/aws-lambda-go/lambda
-	GOOS=linux go build main.go
+	GOOS=linux go build -o main lambda/execute_orders/main.go
+	zip function.zip main
+
+pack_process_orders:
+	go get github.com/aws/aws-lambda-go/lambda
+	GOOS=linux go build -o main lambda/process_orders/main.go
 	zip function.zip main

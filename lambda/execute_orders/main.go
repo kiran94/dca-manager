@@ -1,4 +1,4 @@
-package lambda
+package main
 
 import (
 	"bytes"
@@ -8,8 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	awsEvents "github.com/aws/aws-lambda-go/events"
+	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -19,22 +23,64 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Executes the configured orders.
-func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
+func main() {
+	log.SetOutput(os.Stdout)
+	log.SetReportCaller(false)
+	log.Info("Lambda Execution Starting")
 
+	if os.Getenv("_LAMBDA_SERVER_PORT") != "" {
+
+		log.SetFormatter(&log.TextFormatter{
+			DisableColors: true,
+			FullTimestamp: true,
+		})
+		log.SetFormatter(&log.JSONFormatter{})
+
+		awsLambda.Start(HandleRequest)
+
+	} else {
+		HandleRequestLocally()
+	}
+
+	log.Info("Lambda Execution Done.")
+}
+
+
+func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string, error) {
+	awsConfig, err := awsConfig.LoadDefaultConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
+	pendingOrders, err := ExecuteOrders(&awsConfig, &c)
+	if err != nil {
+		return nil, err
+	}
+
+	serialisedOrders, err := json.Marshal(*pendingOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	serialisedOrdersString := string(serialisedOrders)
+	return &serialisedOrdersString, err
+}
+
+// Executes the configured orders.
+func ExecuteOrders(awsConfig *aws.Config, context *context.Context) (*[]orders.PendingOrders, error) {
 	log.Info("Executing Orders")
 
 	// Get DCA Configuration
 	dcaConf, err := dcaConfig.GetDCAConfiguration(*awsConfig, *context)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Debug(dcaConf)
 
 	// Call Kraken API
 	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*awsConfig, *context)
 	if ssmErr != nil {
-		return ssmErr
+		return nil, ssmErr
 	}
 
 	// Create Orders (per Exchange)
@@ -46,6 +92,8 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 	// Execute Orders
 	s3Client := s3.NewFromConfig(*awsConfig)
 	sqsClient := sqs.NewFromConfig(*awsConfig)
+
+	submittedPendingOrders := make([]orders.PendingOrders, len(dcaConf.Orders))
 
 	for index, order := range dcaConf.Orders {
 		log.Debugf("Running Order %s with Exchange %s", index, order.Exchange)
@@ -63,7 +111,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 		}
 
 		if orderErr != nil {
-			return orderErr
+			return nil, orderErr
 		}
 
 		s3Path := fmt.Sprintf(
@@ -75,7 +123,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 
 		orderResultBytes, err := json.Marshal(orderResult)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
@@ -96,16 +144,17 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) error {
 
 		submitErr := SubmitPendingOrder(sqsClient, &po, context, order.Exchange, allowReal)
 		if submitErr != nil {
-			return submitErr
+			return nil, submitErr
 		}
+
+		submittedPendingOrders = append(submittedPendingOrders, po)
 	}
 
-	return nil
+	return &submittedPendingOrders, nil
 }
 
 // Submits the given pending order to queue.
 func SubmitPendingOrder(sc *sqs.Client, po *orders.PendingOrders, c *context.Context, exchange string, real bool) error {
-
 	sqsMessageBodyBytes, err := json.Marshal(po)
 	if err != nil {
 		return err
@@ -140,4 +189,28 @@ func SubmitPendingOrder(sc *sqs.Client, po *orders.PendingOrders, c *context.Con
 	}
 
 	return nil
+}
+
+func HandleRequestLocally() {
+	event := awsEvents.CloudWatchEvent{
+		Version:    "",
+		ID:         "",
+		DetailType: "",
+		Source:     "",
+		AccountID:  "",
+		Time:       time.Time{},
+		Region:     "",
+		Resources:  []string{},
+		Detail:     []byte{},
+	}
+
+	res, err := HandleRequest(context.TODO(), event)
+
+	if res != nil {
+		log.Infof("Result: %s \n", *res)
+	}
+
+	if err != nil {
+		log.Errorf("Error: %s \n", err)
+	}
 }

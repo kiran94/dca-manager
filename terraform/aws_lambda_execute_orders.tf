@@ -1,8 +1,10 @@
 locals {
-  lambda_s3_scripts_prefix             = "scripts"
-  lambda_cloudwatch_default_retention  = 7
-  lambda_execute_order_object          = "dcs-execute-orders.zip"
-  lambda_s3_pending_transaction_prefix = "transactions/status=pending"
+  lambda_s3_scripts_prefix               = "scripts"
+  lambda_cloudwatch_default_retention    = 7
+  lambda_execute_order_object            = "dca-execute-orders.zip"
+  lambda_process_order_object            = "dca-process-orders.zip"
+  lambda_s3_pending_transaction_prefix   = "transactions/status=pending"
+  lambda_s3_processed_transaction_prefix = "transactions/status=complete"
 }
 
 # Lambda
@@ -20,11 +22,11 @@ resource "aws_lambda_function" "execute_orders" {
 
   environment {
     variables = {
-      "DCA_BUCKET" = aws_s3_bucket.main.bucket
-      "DCA_CONFIG" = aws_s3_bucket_object.config.id,
-      # "DCA_ALLOW_REAL" = "1"
+      "DCA_BUCKET"                   = aws_s3_bucket.main.bucket
+      "DCA_CONFIG"                   = aws_s3_bucket_object.config.id,
+      "DCA_ALLOW_REAL"               = "1"
       "DCA_PENDING_ORDERS_QUEUE_URL" = aws_sqs_queue.pending_orders_queue.url,
-      "DCA_PENDING_ORDER_S3_PREFIX"  = local.lambda_s3_pending_transaction_prefix
+      "DCA_PENDING_ORDER_S3_PREFIX"  = local.lambda_s3_pending_transaction_prefix,
     }
   }
 
@@ -107,7 +109,7 @@ resource "aws_iam_role" "execute_orders_iam_role" {
   }
 }
 
-resource "aws_iam_policy_attachment" "attach_lambda_basic_execution_role" {
+resource "aws_iam_policy_attachment" "attach_lambda_basic_execution_role_execute_order" {
   name       = "AttachAWSLambdaBasicExecutionRole"
   roles      = [aws_iam_role.execute_orders_iam_role.name]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
@@ -179,4 +181,8 @@ output "aws_lambda_execute_orders" {
 
 output "aws_lambda_pending_order_path" {
   value = local.lambda_s3_pending_transaction_prefix
+}
+
+output "aws_lambda_processed_order_path" {
+  value = local.lambda_s3_processed_transaction_prefix
 }
