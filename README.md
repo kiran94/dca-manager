@@ -22,6 +22,12 @@ Dollar Cost Average Manager
 Assuming you are at the root of the repository.
 
 ```sh
+# Download Glue Jars
+cd ./glue/jars
+sh download.sh
+cd ../../
+
+# Export Terraform Variables
 export TF_VAR_KRAKEN_API_KEY=your_key
 export TF_VAR_KRAKEN_API_SECRET=your_secret
 export TF_VAR_lambda_failure_dlq_email='["you@email.com"]'

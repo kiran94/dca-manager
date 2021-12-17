@@ -70,3 +70,5 @@ main
 dca-manager
 data
 function.zip
+
+glue/jars/*.jar
