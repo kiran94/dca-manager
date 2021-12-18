@@ -12,6 +12,7 @@ Dollar Cost Average Manager
     * [Running](#running)
 * [Configuration](#configuration)
 * [Schedules](#schedules)
+* [Architecture](#architecture)
 
 <!-- /toc -->
 
@@ -132,3 +133,49 @@ variable "execute_orders_schedules" {
 See [AWS Schedule Expressions](https://docs.aws.amazon.com/lambda/latest/dg/services-cloudwatchevents-expressions.html) for all the supported options.
 
 See [variables.tf](./terraform/variables.tf)
+
+## Architecture
+
+```
+
+                                                          ╔═══════════════╗
+                                                          ║               ║
+                                        ┌───────────────► ║  KRAKEN API   ║ ───────────────────┐
+                                        │                 ║               ║                    │
+                                  submit orders           ╚═══════════════╝          get executed order details
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                    ╔═════════╗                       ▼
+╔════════════════════╗         ┌────────────────┐            ║         ║                ┌────────────────┐
+║     Schedule       ║───────► │ Execute Orders │ ────────►  ║   SQS   ║ ────────────►  │ Process Orders │
+║(Cloudwatch Events) ║         │   AWS Lambda   │            ║         ║                │   AWS Lambda   │
+╚════════════════════╝         └────────────────┘            ╚═════════╝                └────────────────┘
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                                        │                                                      │
+                               store pending order                                      store order details
+                                        │                    ╔═════════╗                       │
+                                        │                    ║         ║                       │
+                                        └──────────────────► ║   S3    ║ ◄─────────────────────┘
+                                                             ║         ║
+                                                             ╚═════════╝
+                                                                  │
+                                                                  │
+                                                                  │
+                                                                  ▼
+                                                ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                                                ┃                                    ┃
+                                                ┃     Potential Further Analytics    ┃
+                                                ┃                                    ┃
+                                                ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+```
+
+*diagram created using [venn](https://github.com/jbyuki/venn.nvim)*
