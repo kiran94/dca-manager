@@ -8,6 +8,7 @@ Dollar Cost Average Manager
 
 * [Getting Started](#getting-started)
     * [Infrastructure](#infrastructure)
+    * [Hudi Integration](#hudi-integration)
     * [Code](#code)
     * [Running](#running)
 * [Configuration](#configuration)
@@ -54,6 +55,17 @@ git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 ```
 
 *Note some coordination might be required here. Where the lambda function cannot be created without the zip file existing in the S3 location first. Therefore this may need to be at least uploaded to S3 first before `terraform apply` will complete successfully.*
+
+### Hudi Integration
+
+This solution also provides the ability load processed transactions into an [Apache Hudi Table](https://hudi.apache.org/) which can be accessed with [Amazon Athena](https://aws.amazon.com/athena) for further analytics processing. 
+
+In order to do this, the [AWS Glue Connector for Apache Hudi](https://aws.amazon.com/marketplace/server/procurement?productId=e918d411-44a4-4b8d-b995-e101d7ef670b) must be applied to the target AWS account. Unfortunately I am not able to find a way to do this via terraform but you can follow these [instructions](https://aws.amazon.com/blogs/big-data/writing-to-apache-hudi-tables-using-aws-glue-connector/) to get setup. In this solution we use Spark 3 and therefore the default name we apply is `hudi-connection3`.
+
+Once this has been completed, then the name of the setup connection should be set into the terraform variable `glue_connections`.
+
+Then the terraform variable `enable_analytics` must be set to `true` along with another `terraform apply` to bring up all the nessasary infrastructure.
+
 
 ### Code
 
