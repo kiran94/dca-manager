@@ -120,7 +120,7 @@ resource "aws_glue_job" "load_transactions" {
     "--output_path"                      = "s3a://${join("/", [aws_s3_bucket.main.bucket, local.glue_hudi_prefix])}/"
     "--glue_database"                    = aws_glue_catalog_database.main[count.index].name
     "--glue_table"                       = "test"
-    "--write_operation"                  = "upsert"
+    "--write_operation"                  = "bulk_insert"
     "--enable-metrics"                   = ""
     "--enable-glue-datacatalog"          = ""
     "--enable-continuous-cloudwatch-log" = "true"
