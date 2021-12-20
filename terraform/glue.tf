@@ -42,13 +42,23 @@ resource "aws_iam_role" "glue" {
       Version = "2012-10-17"
       Statement = [
         {
+          Sid = "AllowS3ReadTransactions"
           Effect = "Allow"
           Action = [
             "s3:GetObject",
             "s3:PutObject",
           ]
           Resource = [
-            "${aws_s3_bucket.main.arn}",
+            "${aws_s3_bucket.main.arn}/transactions/*",
+          ]
+        },
+        {
+          Sid = "AllowS3AllDataLake"
+          Effect = "Allow"
+          Action = [
+            "s3:*"
+          ]
+          Resource = [
             "${aws_s3_bucket.main.arn}/glue/*",
           ]
         }
@@ -74,11 +84,6 @@ resource "aws_iam_policy_attachment" "attach_ec2_container_registry" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
 
-resource "aws_iam_policy_attachment" "attach_ec2_full_access" {
-  name       = "AttachAWSEC2FullAccess"
-  roles      = [aws_iam_role.glue.name]
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-}
 
 # resource "aws_iam_policy_attachment" "attach_ec2_full_access" {
 #   name       = "AttachAWSEC2FullAccess"
