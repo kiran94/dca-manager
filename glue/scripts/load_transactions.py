@@ -45,18 +45,9 @@ def main():
         'hoodie.datasource.write.partitionpath.field': partition_path,
         'hoodie.datasource.write.precombine.field': precombine,
         'hoodie.datasource.write.keygenerator.class': 'org.apache.hudi.keygen.ComplexKeyGenerator',
-        'hoodie.datasource.write.row.writer.enable': "true",
         'hoodie.datasource.write.hive_style_partitioning': "true",
-        'hoodie.cleaner.commits.retained': "1",
-        'hoodie.keep.min.commits': "2",
-        'hoodie.keep.max.commits': "3",
-        'hoodie.clean.automatic': "true",
-        'hoodie.parquet.max.file.size': "120",
-        'hoodie.bulkinsert.shuffle.parallelism': "100",
         # Parquet
         'hoodie.parquet.compression.codec': "snappy",
-        'hoodie.parquet.page.size': "102400",
-        'hoodie.parquet.block.size': "268435456",
         # Hive
         'hoodie.datasource.hive_sync.enable': "true",
         'hoodie.datasource.hive_sync.use_jdbc': "false",
