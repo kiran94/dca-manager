@@ -1,51 +1,38 @@
-import logging
-import sys
 import os
+import sys
 
-import boto3
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 try:
-    from awsglue.transforms import *
-    from awsglue.utils import getResolvedOptions
     from awsglue.context import GlueContext
     from awsglue.job import Job
+    from awsglue.utils import getResolvedOptions
 except ImportError:
     pass
-
-
-spark = SparkSession.builder.master("local[1]") \
-    .appName("load_transactions") \
-    .getOrCreate()
 
 
 def main():
     print('Starting Glue Job')
 
-    # spark = SparkSession.builder.master("local[1]") \
-    #     .appName("load_transactions") \
-    #     .getOrCreate()
-
     spark = SparkSession.builder \
         .config('spark.serializer', 'org.apache.spark.serializer.KryoSerializer') \
+        .config('spark.sql.hive.convertMetastoreParquet', 'false') \
         .getOrCreate()
 
     sc = spark.sparkContext
     glue_context = GlueContext(sc)
 
-    args = getResolvedOptions(sys.argv, ['JOB_NAME', 'input_path', 'output_path', 'glue_database', 'glue_table', 'write_operation'])
+    args = getResolvedOptions(sys.argv, [
+                              'JOB_NAME', 'input_path', 'output_path', 'glue_database', 'glue_table', 'write_operation'])
     input_path = args['input_path']
     output_path = args['output_path']
     database_name = args['glue_database']
     table_name = args['glue_table']
-    write_operaton = args['write_operation']
+    write_operation = args['write_operation']
 
     job = Job(glue_context)
     job.init(args['JOB_NAME'], args)
-
-    ################
-    # WARN: paramatize table
 
     partition_path = 'pair'
     key = 'transaction_id,close_time'
@@ -58,13 +45,13 @@ def main():
         'hoodie.datasource.write.partitionpath.field': partition_path,
         'hoodie.datasource.write.precombine.field': precombine,
         'hoodie.datasource.write.keygenerator.class': 'org.apache.hudi.keygen.ComplexKeyGenerator',
-        'hoodie.datasource.write.hive_style_partitioning': "true",
         'hoodie.datasource.write.row.writer.enable': "true",
+        'hoodie.datasource.write.hive_style_partitioning': "true",
         'hoodie.cleaner.commits.retained': "1",
         'hoodie.keep.min.commits': "2",
         'hoodie.keep.max.commits': "3",
         'hoodie.clean.automatic': "true",
-        'hoodie.parquet.max.file.size': "512MB",
+        'hoodie.parquet.max.file.size': "120",
         'hoodie.bulkinsert.shuffle.parallelism': "100",
         # Parquet
         'hoodie.parquet.compression.codec': "snappy",
@@ -85,6 +72,9 @@ def main():
     print('Reading from ', input_path)
     frame = spark.read.json(input_path)
 
+    frame.printSchema()
+    frame.show()
+
     print('Formatting Columns')
     frame = frame.withColumn('close_time', F.from_unixtime(F.col('close_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
     frame = frame.withColumn('open_time', F.from_unixtime(F.col('open_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
@@ -101,11 +91,11 @@ def main():
     print(f'Writing to Output {hudi_output_path}')
 
     frame.write \
-        .format('org.apache.hudi') \
-        .option('hoodie.datasource.write.operation', write_operaton) \
+        .format('hudi') \
+        .option('hoodie.datasource.write.operation', write_operation) \
         .options(**config) \
         .mode('append') \
-        .save(output_path)
+        .save(hudi_output_path)
 
     print('DONE')
 
