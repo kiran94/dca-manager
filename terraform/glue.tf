@@ -1,11 +1,7 @@
 locals {
   glue_script_prefix            = "glue/scripts"
-  glue_jars_prefix              = "glue/jars"
   glue_hudi_prefix              = "glue/hudi"
   glue_load_transactions_script = "load_transactions.py"
-  glue_hudi_spark_jar           = "hudi-spark-bundle_2.11-0.8.0.jar"
-  glue_hudi_avro_jar            = "spark-avro_2.11-2.4.7.jar"
-  glue_local_jars_path          = "../glue/jars"
 }
 
 // S3 BUCKET
@@ -114,26 +110,7 @@ resource "aws_glue_job" "load_transactions" {
     "--enable-metrics"                   = ""
     "--enable-glue-datacatalog"          = ""
     "--enable-continuous-cloudwatch-log" = "true"
-    "--extra-jars" = join(",", [
-      "s3://${aws_s3_bucket.main.id}/${aws_s3_bucket_object.hudi_spark.id}",
-      "s3://${aws_s3_bucket.main.id}/${aws_s3_bucket_object.spark_avro.id}"
-    ])
   }
-}
-
-# EXTRA JARS
-resource "aws_s3_bucket_object" "hudi_spark" {
-  bucket = aws_s3_bucket.main.bucket
-  key    = join("/", [local.glue_jars_prefix, local.glue_hudi_spark_jar])
-  source = join("/", [local.glue_local_jars_path, local.glue_hudi_spark_jar])
-  etag   = filemd5(join("/", [local.glue_local_jars_path, local.glue_hudi_spark_jar]))
-}
-
-resource "aws_s3_bucket_object" "spark_avro" {
-  bucket = aws_s3_bucket.main.bucket
-  key    = join("/", [local.glue_jars_prefix, local.glue_hudi_avro_jar])
-  source = join("/", [local.glue_local_jars_path, local.glue_hudi_avro_jar])
-  etag   = filemd5(join("/", [local.glue_local_jars_path, local.glue_hudi_avro_jar]))
 }
 
 # DATABASE
