@@ -6,6 +6,8 @@ locals {
 
 // S3 BUCKET
 resource "aws_s3_bucket_object" "glue_load_transactions_script" {
+  count = var.enable_analytics ? 1 : 0
+
   bucket = aws_s3_bucket.main.bucket
   key    = join("/", [local.glue_script_prefix, local.glue_load_transactions_script])
   source = "../glue/scripts/load_transactions.py"
@@ -14,6 +16,8 @@ resource "aws_s3_bucket_object" "glue_load_transactions_script" {
 
 // IAM ROLE
 resource "aws_iam_role" "glue" {
+  count = var.enable_analytics ? 1 : 0
+
   name = "dca-glue-role"
 
   assume_role_policy = jsonencode({
@@ -54,15 +58,19 @@ resource "aws_iam_role" "glue" {
 }
 
 resource "aws_iam_policy_attachment" "attach_glue_service_role" {
+  count = var.enable_analytics ? 1 : 0
+
   name       = "AttachAWSGlueBasicExecutionRole"
-  roles      = [aws_iam_role.glue.name]
+  roles      = [aws_iam_role.glue[count.index].name]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
-
+# NOTE: Required to read from Glue marketplace
 resource "aws_iam_policy_attachment" "attach_ec2_container_registry" {
+  count = var.enable_analytics ? 1 : 0
+
   name       = "AttachAWSEC2ContainerExecutionRole"
-  roles      = [aws_iam_role.glue.name]
+  roles      = [aws_iam_role.glue[count.index].name]
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
 
@@ -72,17 +80,18 @@ resource "aws_iam_policy_attachment" "attach_ec2_full_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
 
-# JOB
-# WARN: Document into README
-variable "glue_connections" {
-  type    = list(string)
-  default = ["hudi-connection"]
-}
+# resource "aws_iam_policy_attachment" "attach_ec2_full_access" {
+#   name       = "AttachAWSEC2FullAccess"
+#   roles      = [aws_iam_role.glue.name]
+#   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+# }
 
 resource "aws_glue_job" "load_transactions" {
+  count = var.enable_analytics ? 1 : 0
+
   name        = "dca-load-transactions"
   connections = var.glue_connections
-  role_arn    = aws_iam_role.glue.arn
+  role_arn    = aws_iam_role.glue[count.index].arn
 
   max_retries       = 0
   timeout           = 600
@@ -95,16 +104,16 @@ resource "aws_glue_job" "load_transactions" {
   }
 
   command {
-    script_location = "s3://${aws_s3_bucket.main.bucket}/${aws_s3_bucket_object.glue_load_transactions_script.id}"
+    script_location = "s3://${aws_s3_bucket.main.bucket}/${aws_s3_bucket_object.glue_load_transactions_script[count.index].id}"
     python_version  = "3"
   }
 
   default_arguments = {
     "--job-language"                     = "python"
     "--job-bookmark-option"              = "job-bookmark-disable"
-    "--input_path"                       = "s3://${join("/", [aws_s3_bucket.main.bucket, local.lambda_s3_processed_transaction_prefix])}/"
-    "--output_path"                      = "s3://${join("/", [aws_s3_bucket.main.bucket, local.glue_hudi_prefix])}/"
-    "--glue_database"                    = aws_glue_catalog_database.main.name
+    "--input_path"                       = "s3a://${join("/", [aws_s3_bucket.main.bucket, local.lambda_s3_processed_transaction_prefix])}/"
+    "--output_path"                      = "s3a://${join("/", [aws_s3_bucket.main.bucket, local.glue_hudi_prefix])}/"
+    "--glue_database"                    = aws_glue_catalog_database.main[count.index].name
     "--glue_table"                       = "test"
     "--write_operation"                  = "upsert"
     "--enable-metrics"                   = ""
@@ -115,6 +124,8 @@ resource "aws_glue_job" "load_transactions" {
 
 # DATABASE
 resource "aws_glue_catalog_database" "main" {
+  count = var.enable_analytics ? 1 : 0
+
   name        = "dca_manager"
   description = "Dollar Cost Average Analytics"
 }
