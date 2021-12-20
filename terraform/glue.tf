@@ -119,7 +119,7 @@ resource "aws_glue_job" "load_transactions" {
     "--input_path"                       = "s3a://${join("/", [aws_s3_bucket.main.bucket, local.lambda_s3_processed_transaction_prefix])}/"
     "--output_path"                      = "s3a://${join("/", [aws_s3_bucket.main.bucket, local.glue_hudi_prefix])}/"
     "--glue_database"                    = aws_glue_catalog_database.main[count.index].name
-    "--glue_table"                       = "test"
+    "--glue_table"                       = "transactions"
     "--write_operation"                  = "bulk_insert"
     "--enable-metrics"                   = ""
     "--enable-glue-datacatalog"          = ""
