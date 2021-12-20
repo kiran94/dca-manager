@@ -42,7 +42,7 @@ resource "aws_iam_role" "glue" {
       Version = "2012-10-17"
       Statement = [
         {
-          Sid = "AllowS3ReadTransactions"
+          Sid    = "AllowS3ReadTransactions"
           Effect = "Allow"
           Action = [
             "s3:GetObject",
@@ -53,7 +53,7 @@ resource "aws_iam_role" "glue" {
           ]
         },
         {
-          Sid = "AllowS3AllDataLake"
+          Sid    = "AllowS3AllDataLake"
           Effect = "Allow"
           Action = [
             "s3:*"
