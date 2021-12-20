@@ -99,10 +99,10 @@ resource "aws_glue_job" "load_transactions" {
   role_arn    = aws_iam_role.glue[count.index].arn
 
   max_retries       = 0
-  timeout           = 600
-  worker_type       = "G.2X" # TODO: Add
-  number_of_workers = 4
-  glue_version      = "2.0"
+  timeout           = 10
+  worker_type       = "Standard"
+  number_of_workers = 2
+  glue_version      = "3.0"
 
   execution_property {
     max_concurrent_runs = 1
