@@ -32,3 +32,16 @@ variable "KRAKEN_API_KEY" {
 variable "KRAKEN_API_SECRET" {
   default = "dummy"
 }
+
+// ANALYTICS
+variable "enable_analytics" {
+  type        = bool
+  description = "Enables Glue/Hudi Infrastructure"
+  default     = true
+}
+
+variable "glue_connections" {
+  type        = list(string)
+  description = "The AWS Glue Connector for Apache Hudi"
+  default     = ["hudi-connection3"]
+}
