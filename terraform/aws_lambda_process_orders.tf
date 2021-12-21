@@ -1,6 +1,6 @@
 # Lambda
 resource "aws_lambda_function" "process_orders" {
-  function_name = "dcs-process-orders"
+  function_name = "dca-process-orders"
   handler       = "main"
   runtime       = "go1.x"
   role          = aws_iam_role.process_order_iam_role.arn

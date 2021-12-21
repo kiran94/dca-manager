@@ -1,5 +1,5 @@
 resource "aws_iam_user" "github_action_user" {
-  name = "github_action_user_dcs"
+  name = "github_action_user_dca"
 }
 
 resource "aws_iam_access_key" "github_action_user_access" {
@@ -7,7 +7,7 @@ resource "aws_iam_access_key" "github_action_user_access" {
 }
 
 resource "aws_iam_role" "github_action_role" {
-  name = "dcs_github_action_role"
+  name = "dca_github_action_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
