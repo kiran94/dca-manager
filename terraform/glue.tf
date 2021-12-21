@@ -84,13 +84,6 @@ resource "aws_iam_policy_attachment" "attach_ec2_container_registry" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
 
-
-# resource "aws_iam_policy_attachment" "attach_ec2_full_access" {
-#   name       = "AttachAWSEC2FullAccess"
-#   roles      = [aws_iam_role.glue.name]
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-# }
-
 resource "aws_glue_job" "load_transactions" {
   count = var.enable_analytics ? 1 : 0
 

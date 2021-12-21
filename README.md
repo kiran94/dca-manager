@@ -24,11 +24,6 @@ Dollar Cost Average Manager
 Assuming you are at the root of the repository.
 
 ```sh
-# Download Glue Jars
-cd ./glue/jars
-sh download.sh
-cd ../../
-
 # Export Terraform Variables
 export TF_VAR_KRAKEN_API_KEY=your_key
 export TF_VAR_KRAKEN_API_SECRET=your_secret
@@ -65,7 +60,6 @@ In order to do this, the [AWS Glue Connector for Apache Hudi](https://aws.amazon
 Once this has been completed, then the name of the setup connection should be set into the terraform variable `glue_connections`.
 
 Then the terraform variable `enable_analytics` must be set to `true` along with another `terraform apply` to bring up all the nessasary infrastructure.
-
 
 ### Code
 
