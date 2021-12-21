@@ -1,8 +1,10 @@
 # dca-manager
 
-[![main](https://github.com/kiran94/dca-manager/actions/workflows/main.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/main.yml)
+> Dollar Cost Average Manager
 
-Dollar Cost Average Manager
+[![glue](https://github.com/kiran94/dca-manager/actions/workflows/glue.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/glue.yml)
+
+[![lambda](https://github.com/kiran94/dca-manager/actions/workflows/lambda.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/lambda.yml)
 
 <!-- toc GFM -->
 
