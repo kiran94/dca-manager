@@ -66,4 +66,4 @@ jobs:
 
       - name: Deploy
         run: |
-          aws s3 sync scripts s3://${{ secrets.AWS_LAMBDA_BUCKET }}/${{ secrets.AWS_GLUE_SCRIPT_PREFIX }}
+          aws s3 sync scripts s3://${{ secrets.AWS_GLUE_BUCKET }}/${{ secrets.AWS_GLUE_SCRIPT_PREFIX }}
