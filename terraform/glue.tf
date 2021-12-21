@@ -132,7 +132,7 @@ resource "aws_glue_catalog_database" "main" {
   description = "Dollar Cost Average Analytics"
 }
 
-# Github Action
+# GITHUB ACTION
 resource "github_actions_secret" "aws_glue_bucket" {
   repository      = github_repository.main.name
   secret_name     = "AWS_GLUE_BUCKET"
@@ -145,3 +145,7 @@ resource "github_actions_secret" "aws_glue_scripts_prefix" {
   plaintext_value = local.glue_script_prefix
 }
 
+# OUTPUTS
+output "load_transactions_job" {
+    value = aws_glue_job.load_transactions[0].id
+}
