@@ -151,12 +151,17 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 			}
 
 			log.Infof("Uploading Transaction %s to Bucket %s, Key %s", order.TransactionId, s3Bucket, s3Path)
-			s3Client.PutObject(*context, &s3.PutObjectInput{
+			_, s3PutErr := s3Client.PutObject(*context, &s3.PutObjectInput{
 				Bucket: &s3Bucket,
 				Key:    &s3Path,
 				Body:   bytes.NewReader(orderBytes),
 			})
 
+			if s3PutErr != nil {
+				return err
+			}
+
+			// Submit Glue Job
 			jobName := os.Getenv(dcaConfig.EnvGlueProcessTransactionJob)
 			jobArguments := map[string]string{
 				"--input_path":      fmt.Sprintf("s3://%s/%s", s3Bucket, s3Path),
