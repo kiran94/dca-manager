@@ -12,6 +12,14 @@ resource "github_repository" "main" {
   allow_rebase_merge     = false
   allow_auto_merge       = false
   delete_branch_on_merge = true
+
+  topics = [
+    "dca",
+    "crypto",
+    "investing",
+    "kraken",
+    "trading",
+  ]
 }
 
 # GitHub Action Secrets
