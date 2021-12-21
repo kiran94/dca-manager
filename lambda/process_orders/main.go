@@ -164,7 +164,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 			// Submit Glue Job
 			jobName := os.Getenv(dcaConfig.EnvGlueProcessTransactionJob)
 			jobArguments := map[string]string{
-				"--input_path":      fmt.Sprintf("s3://%s/%s", s3Bucket, s3Path),
+				"--input_path":      fmt.Sprintf("s3a://%s/%s", s3Bucket, s3Path),
 				"--write_operation": os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
 			}
 
