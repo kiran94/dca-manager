@@ -18,12 +18,12 @@ variable "execute_orders_schedules" {
 
 // ALERTS
 variable "lambda_failure_dlq_email" {
-  type = list(string)
+  type        = list(string)
   description = "The Email to notify when a failed lambda execution completes"
 }
 
 variable "lambda_success_email" {
-  type = list(string)
+  type        = list(string)
   description = "The Email to notify when a successful lambda execution completes"
 }
 
@@ -31,11 +31,11 @@ variable "lambda_success_email" {
 // Override with TF_VAR_
 variable "KRAKEN_API_KEY" {
   description = "The Kraken API Key"
-  default = "dummy"
+  default     = "dummy"
 }
 variable "KRAKEN_API_SECRET" {
   description = "The Kraken API Secret"
-  default = "dummy"
+  default     = "dummy"
 }
 
 // ANALYTICS
