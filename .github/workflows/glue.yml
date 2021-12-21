@@ -38,5 +38,11 @@ jobs:
         if: steps.cache-pipenv.outputs.cache-hit != 'true'
         run: pipenv install
 
+      - name: Switch Shell
+        run: |
+          ls
+          pwd
+          pipenv shell
+
       - name: Lint
         run: pipenv run flake8
