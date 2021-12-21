@@ -12,6 +12,11 @@ resource "aws_s3_bucket_object" "glue_load_transactions_script" {
   key    = join("/", [local.glue_script_prefix, local.glue_load_transactions_script])
   source = "../glue/scripts/load_transactions.py"
   etag   = filemd5("../glue/scripts/load_transactions.py")
+
+  #NOTE: Ignore for CI depoyments
+  lifecycle {
+    ignore_changes = [etag]
+  }
 }
 
 // IAM ROLE
