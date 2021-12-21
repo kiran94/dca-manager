@@ -36,8 +36,8 @@ variable "KRAKEN_API_SECRET" {
 // ANALYTICS
 variable "enable_analytics" {
   type        = bool
-  default     = true
   description = "Enables Glue/Hudi Infrastructure"
+  default     = true
 }
 
 variable "glue_connections" {
