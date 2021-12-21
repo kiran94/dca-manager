@@ -51,7 +51,6 @@ resource "github_actions_secret" "aws_lambda_scripts_prefix" {
   plaintext_value = local.lambda_s3_scripts_prefix
 }
 
-
 #Outputs
 
 output "github_repository_ssh_clone_url" {
