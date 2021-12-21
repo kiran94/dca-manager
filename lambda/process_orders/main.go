@@ -12,6 +12,7 @@ import (
 	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	krakenapi "github.com/beldur/kraken-go-api-client"
@@ -77,6 +78,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 
 	s3Client := s3.NewFromConfig(*awsConfig)
 	sqsClient := sqs.NewFromConfig(*awsConfig)
+	glueClient := glue.NewFromConfig(*awsConfig)
 
 	if len(sqsEvent.Records) == 0 {
 		log.Warn("No SQS Messages found, returning")
@@ -154,6 +156,32 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 				Key:    &s3Path,
 				Body:   bytes.NewReader(orderBytes),
 			})
+
+			jobName := os.Getenv(dcaConfig.EnvGlueProcessTransactionJob)
+			jobArguments := map[string]string{
+				"--input_path":      fmt.Sprintf("s3://%s/%s", s3Bucket, s3Path),
+				"--write_operation": os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
+			}
+
+			log.Infof(
+				"Submitting Transaction %s to Glue Job %s with Arguments %s",
+				order.TransactionId,
+				jobName,
+				jobArguments,
+			)
+			submittedJob, err := glueClient.StartJobRun(*context, &glue.StartJobRunInput{
+				JobName:   &jobName,
+				Arguments: jobArguments,
+			})
+
+			log.Infof(
+				"Transaction %s submitted under Glue Job: %s",
+				order.TransactionId,
+				*submittedJob.JobRunId,
+			)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Delete from Queue
