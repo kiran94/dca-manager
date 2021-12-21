@@ -9,7 +9,7 @@ locals {
 
 # Lambda
 resource "aws_lambda_function" "execute_orders" {
-  function_name = "dcs-execute-orders"
+  function_name = "dca-execute-orders"
   handler       = "main"
   runtime       = "go1.x"
   role          = aws_iam_role.execute_orders_iam_role.arn

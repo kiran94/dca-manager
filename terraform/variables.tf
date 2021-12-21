@@ -7,6 +7,7 @@ variable "execute_orders_schedules" {
     # https://docs.aws.amazon.com/lambda/latest/dg/services-cloudwatchevents-expressions.html
   }))
 
+  description = "The schedule in which to execute orders"
   default = [
     {
       description         = "At 6:00 UTC on every Friday"
@@ -17,20 +18,24 @@ variable "execute_orders_schedules" {
 
 // ALERTS
 variable "lambda_failure_dlq_email" {
-  type = list(string)
+  type        = list(string)
+  description = "The Email to notify when a failed lambda execution completes"
 }
 
 variable "lambda_success_email" {
-  type = list(string)
+  type        = list(string)
+  description = "The Email to notify when a successful lambda execution completes"
 }
 
 // SECRETS
 // Override with TF_VAR_
 variable "KRAKEN_API_KEY" {
-  default = "dummy"
+  description = "The Kraken API Key"
+  default     = "dummy"
 }
 variable "KRAKEN_API_SECRET" {
-  default = "dummy"
+  description = "The Kraken API Secret"
+  default     = "dummy"
 }
 
 // ANALYTICS

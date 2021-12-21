@@ -1,6 +1,6 @@
 // FAILURE NOTFICATIONS
 resource "aws_sns_topic" "lambda_failure_dlq" {
-  name = "dcs-lambda-failure-dlq"
+  name = "dca-lambda-failure-dlq"
 }
 
 resource "aws_sns_topic_subscription" "lambda_failure_dlq" {
@@ -13,7 +13,7 @@ resource "aws_sns_topic_subscription" "lambda_failure_dlq" {
 
 // SUCCESS NOTFICATIONS
 resource "aws_sns_topic" "lambda_success" {
-  name = "dcs-lambda-sucess"
+  name = "dca-lambda-sucess"
 }
 
 resource "aws_sns_topic_subscription" "lambda_success" {
