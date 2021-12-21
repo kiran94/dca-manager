@@ -1,6 +1,8 @@
 import os
 import sys
 
+
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
@@ -67,8 +69,10 @@ def main():
     frame.show()
 
     print('Formatting Columns')
-    frame = frame.withColumn('close_time', F.from_unixtime(F.col('close_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
-    frame = frame.withColumn('open_time', F.from_unixtime(F.col('open_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
+    frame = frame.withColumn('close_time', F.from_unixtime(
+        F.col('close_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
+    frame = frame.withColumn('open_time', F.from_unixtime(
+        F.col('open_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
     frame = frame.withColumn('fee', frame['fee'].cast('double'))
     frame = frame.withColumn('price', frame['price'].cast('double'))
     frame = frame.withColumn('volume', frame['volume'].cast('double'))
