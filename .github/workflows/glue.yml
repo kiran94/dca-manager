@@ -12,8 +12,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      working-directory: glue
+    defaults:
+      run:
+        working-directory: glue
 
     steps:
       - name: Checkout
@@ -37,12 +38,6 @@ jobs:
       - name: Install Requirements
         if: steps.cache-pipenv.outputs.cache-hit != 'true'
         run: pipenv install
-
-      - name: Switch Shell
-        run: |
-          ls
-          pwd
-          pipenv shell
 
       - name: Lint
         run: pipenv run flake8
