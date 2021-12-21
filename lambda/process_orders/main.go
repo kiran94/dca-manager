@@ -129,7 +129,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 
 		// Upload Details to S3
 		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
-		s3Path := os.Getenv(dcaConfig.EnvS3ProcessedTransaction)
+		s3PathPrefix := os.Getenv(dcaConfig.EnvS3ProcessedTransaction)
 
 		for _, order := range *orders {
 
@@ -140,7 +140,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 
 			s3Path := fmt.Sprintf(
 				"%s/exchange=%s/%s.json",
-				s3Path,
+				s3PathPrefix,
 				strings.ToLower(*exchange.StringValue),
 				order.TransactionId,
 			)
