@@ -127,3 +127,18 @@ resource "aws_glue_catalog_database" "main" {
   name        = "dca_manager"
   description = "Dollar Cost Average Analytics"
 }
+
+# Github Action
+resource "github_actions_secret" "aws_glue_scripts_prefix" {
+  repository      = github_repository.main.name
+  secret_name     = "AWS_GLUE_SCRIPT_PREFIX"
+  plaintext_value = local.glue_script_prefix
+}
+
+
+# WARN: DELETE ME
+# resource "github_actions_secret" "aws_glue_load_transactions_key" {
+#   repository      = github_repository.main.name
+#   secret_name     = "AWS_GLUE_LOAD_TRAN_KEY"
+#   plaintext_value = local.glue_load_transactions_script
+# }
