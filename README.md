@@ -55,9 +55,9 @@ git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 
 ### Hudi Integration
 
-This solution also provides the ability load processed transactions into an [Apache Hudi Table](https://hudi.apache.org/) which can be accessed with [Amazon Athena](https://aws.amazon.com/athena) for further analytics processing. 
+This solution also provides the ability load processed transactions into an [Apache Hudi Table](https://hudi.apache.org/) which can be accessed with [Amazon Athena](https://aws.amazon.com/athena) for further analytics processing.
 
-In order to do this, the [AWS Glue Connector for Apache Hudi](https://aws.amazon.com/marketplace/server/procurement?productId=e918d411-44a4-4b8d-b995-e101d7ef670b) must be applied to the target AWS account. Unfortunately I am not able to find a way to do this via terraform but you can follow these [instructions](https://aws.amazon.com/blogs/big-data/writing-to-apache-hudi-tables-using-aws-glue-connector/) to get setup. In this solution we use Spark 3 and therefore the default name we apply is `hudi-connection3`.
+In order to do this, the [AWS Glue Connector for Apache Hudi](https://aws.amazon.com/marketplace/server/procurement?productId=e918d411-44a4-4b8d-b995-e101d7ef670b) must be applied to the target AWS account. Unfortunately I am not able to find a way to do this via terraform but you can follow these [instructions](https://aws.amazon.com/blogs/big-data/writing-to-apache-hudi-tables-using-aws-glue-connector/) to get setup. In this solution we use Spark 3 and therefore the default connection name we apply is `hudi-connection3`.
 
 Once this has been completed, then the name of the setup connection should be set into the terraform variable `glue_connections`.
 
@@ -184,10 +184,20 @@ See [variables.tf](./terraform/variables.tf)
                                                                   │
                                                                   │
                                                                   ▼
+                                                ╔════════════════════════════════════╗
+                                                ║           AWS Glue Job             ║
+                                                ╚════════════════════════════════════╝
+                                                                  │
+                                                                  │
+                                                                  ▼
+                                                ╔════════════════════════════════════╗
+                                                ║           AWS Athena               ║
+                                                ╚════════════════════════════════════╝
+                                                                  │
+                                                                  │
+                                                                  ▼
                                                 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-                                                ┃                                    ┃
                                                 ┃     Potential Further Analytics    ┃
-                                                ┃                                    ┃
                                                 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 ```
