@@ -31,6 +31,11 @@ def main():
     table_name = args['glue_table']
     write_operation = args['write_operation']
 
+    valid_write_operation = ['insert', 'upsert', 'bulk_insert', 'delete']
+    if write_operation not in valid_write_operation:
+        print(f'write_operation must be one of options: {valid_write_operation}. But was: {write_operation}')
+        exit(1)
+
     job = Job(glue_context)
     job.init(args['JOB_NAME'], args)
 
