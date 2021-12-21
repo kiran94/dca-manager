@@ -45,6 +45,7 @@ def main():
 
     config = {
         # Hudi
+        'hoodie.table.name': table_name,
         'hoodie.datasource.write.table.type': 'COPY_ON_WRITE',
         'hoodie.datasource.write.recordkey.field': key,
         'hoodie.datasource.write.partitionpath.field': partition_path,
@@ -60,8 +61,7 @@ def main():
         'hoodie.datasource.hive_sync.assume_date_partitioning': "false",
         'hoodie.datasource.hive_sync.partition_extractor_class': "org.apache.hudi.hive.MultiPartKeysValueExtractor",
         'hoodie.datasource.hive_sync.database': database_name,
-        'hoodie.datasource.hive_sync.table': table_name,
-        'hoodie.table.name': table_name,
+        'hoodie.datasource.hive_sync.table': table_name
     }
 
     # Read data from the JSON files
@@ -85,8 +85,8 @@ def main():
 
     # Write to Output
     hudi_output_path = os.path.join(output_path, table_name)
-    print(f'Using Config = {config}')
-    print(f'Writing to Output {hudi_output_path}')
+    print('Using Config:', config, sep='\n')
+    print('Writing to Output: ', hudi_output_path)
 
     frame.write \
         .format('hudi') \
