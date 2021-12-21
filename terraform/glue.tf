@@ -10,8 +10,8 @@ resource "aws_s3_bucket_object" "glue_load_transactions_script" {
 
   bucket = aws_s3_bucket.main.bucket
   key    = join("/", [local.glue_script_prefix, local.glue_load_transactions_script])
-  source = "../glue/scripts/load_transactions.py"
-  etag   = filemd5("../glue/scripts/load_transactions.py")
+  source = "../glue/scripts/${local.glue_load_transactions_script}"
+  etag   = filemd5("../glue/scripts/${local.glue_load_transactions_script}")
 
   #NOTE: Ignore for CI depoyments
   lifecycle {
@@ -51,7 +51,6 @@ resource "aws_iam_role" "glue" {
           Effect = "Allow"
           Action = [
             "s3:GetObject",
-            "s3:PutObject",
           ]
           Resource = [
             "${aws_s3_bucket.main.arn}/transactions/*",
