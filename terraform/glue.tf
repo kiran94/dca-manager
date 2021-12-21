@@ -147,5 +147,5 @@ resource "github_actions_secret" "aws_glue_scripts_prefix" {
 
 # OUTPUTS
 output "load_transactions_job" {
-    value = aws_glue_job.load_transactions[0].id
+  value = aws_glue_job.load_transactions[0].id
 }
