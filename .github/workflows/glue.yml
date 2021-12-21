@@ -25,7 +25,9 @@ jobs:
           python-version: 3.7
 
       - name: Setup Pipenv
-        run: pip install pipenv
+        run: |
+          pip install pipenv
+          pipenv shell
 
       - name: Lint
         run: |
