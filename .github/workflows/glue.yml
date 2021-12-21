@@ -1,4 +1,4 @@
-name: hudi_loader
+name: glue
 
 on:
   push:
