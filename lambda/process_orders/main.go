@@ -168,25 +168,21 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 				"--write_operation": os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
 			}
 
-			log.Infof(
-				"Submitting Transaction %s to Glue Job %s with Arguments %s",
-				order.TransactionId,
-				jobName,
-				jobArguments,
-			)
-			submittedJob, err := glueClient.StartJobRun(*context, &glue.StartJobRunInput{
+			// TODO: Schedule Hudi Load
+			// TODO: Need to check if the job exists
+			// in case enable_analytics = false
+
+			log.Infof("Submitting Transaction %s to Glue Job %s with Arguments %s", order.TransactionId, jobName, jobArguments)
+			submittedJob, glueStartErr := glueClient.StartJobRun(*context, &glue.StartJobRunInput{
 				JobName:   &jobName,
 				Arguments: jobArguments,
 			})
 
-			log.Infof(
-				"Transaction %s submitted under Glue Job: %s",
-				order.TransactionId,
-				*submittedJob.JobRunId,
-			)
-			if err != nil {
-				return err
+			if glueStartErr != nil {
+				return glueStartErr
 			}
+
+			log.Infof("Transaction %s submitted under Glue Job: %s", order.TransactionId, *submittedJob.JobRunId)
 		}
 
 		// Delete from Queue
