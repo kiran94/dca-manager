@@ -12,9 +12,11 @@ resource "aws_lambda_function" "process_orders" {
 
   environment {
     variables = {
-      "DCA_BUCKET"                    = aws_s3_bucket.main.bucket
-      "DCA_PENDING_ORDER_S3_PREFIX"   = local.lambda_s3_pending_transaction_prefix
-      "DCA_PROCESSED_ORDER_S3_PREFIX" = local.lambda_s3_processed_transaction_prefix,
+      "DCA_BUCKET"                             = aws_s3_bucket.main.bucket
+      "DCA_PENDING_ORDER_S3_PREFIX"            = local.lambda_s3_pending_transaction_prefix
+      "DCA_PROCESSED_ORDER_S3_PREFIX"          = local.lambda_s3_processed_transaction_prefix,
+      "DCA_GLUE_PROCESS_TRANSACTION_JOB"       = aws_glue_job.load_transactions.id
+      "DCA_GLUE_PROCESS_TRANSACTION_OPERATION" = "upsert"
     }
   }
 
@@ -63,7 +65,8 @@ resource "aws_iam_role" "process_order_iam_role" {
             "sqs:ReceiveMessage",
             "sqs:DeleteMessage",
             "sqs:ChangeMessageVisibility",
-            "sqs:GetQueueAttributes"
+            "sqs:GetQueueAttributes",
+            "glue:StartJobRun"
           ]
           Effect = "Allow"
           Resource = [
@@ -72,7 +75,8 @@ resource "aws_iam_role" "process_order_iam_role" {
             "${aws_ssm_parameter.kraken_api_key.arn}",
             "${aws_ssm_parameter.kraken_api_secret.arn}",
             "${aws_sns_topic.lambda_failure_dlq.arn}",
-            "${aws_sqs_queue.pending_orders_queue.arn}"
+            "${aws_sqs_queue.pending_orders_queue.arn}",
+            "${aws_glue_job.load_transactions.arn}"
           ]
         }
       ]

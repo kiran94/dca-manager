@@ -59,8 +59,6 @@ In order to do this, the [AWS Glue Connector for Apache Hudi](https://aws.amazon
 
 Once this has been completed, then the name of the setup connection should be set into the terraform variable `glue_connections`.
 
-Then the terraform variable `enable_analytics` must be set to `true` along with another `terraform apply` to bring up all the nessasary infrastructure.
-
 Once the Infrastructure has been applied/deployed then it can be run either with the following command or from the Glue UI.
 
 ```sh

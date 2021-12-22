@@ -12,6 +12,7 @@ import (
 	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	krakenapi "github.com/beldur/kraken-go-api-client"
@@ -77,6 +78,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 
 	s3Client := s3.NewFromConfig(*awsConfig)
 	sqsClient := sqs.NewFromConfig(*awsConfig)
+	glueClient := glue.NewFromConfig(*awsConfig)
 
 	if len(sqsEvent.Records) == 0 {
 		log.Warn("No SQS Messages found, returning")
@@ -127,7 +129,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 
 		// Upload Details to S3
 		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
-		s3Path := os.Getenv(dcaConfig.EnvS3ProcessedTransaction)
+		s3PathPrefix := os.Getenv(dcaConfig.EnvS3ProcessedTransaction)
 
 		for _, order := range *orders {
 
@@ -138,7 +140,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 
 			s3Path := fmt.Sprintf(
 				"%s/exchange=%s/%s.json",
-				s3Path,
+				s3PathPrefix,
 				strings.ToLower(*exchange.StringValue),
 				order.TransactionId,
 			)
@@ -149,11 +151,44 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 			}
 
 			log.Infof("Uploading Transaction %s to Bucket %s, Key %s", order.TransactionId, s3Bucket, s3Path)
-			s3Client.PutObject(*context, &s3.PutObjectInput{
+			_, s3PutErr := s3Client.PutObject(*context, &s3.PutObjectInput{
 				Bucket: &s3Bucket,
 				Key:    &s3Path,
 				Body:   bytes.NewReader(orderBytes),
 			})
+
+			if s3PutErr != nil {
+				return s3PutErr
+			}
+
+			// Since we are passing the absolute complete path for the loaded JSON file
+			// the spark won't be able to derive any hive partition columns
+			// so here we are adding the exchange as an additional column
+			additional_columns := map[string]string{"exchange": strings.ToLower(*exchange.StringValue)}
+			additional_columns_json, addErr := json.Marshal(additional_columns)
+			if addErr != nil {
+				return addErr
+			}
+
+			// Submit Glue Job
+			jobName := os.Getenv(dcaConfig.EnvGlueProcessTransactionJob)
+			jobArguments := map[string]string{
+				"--input_path":         fmt.Sprintf("s3a://%s/%s", s3Bucket, s3Path),
+				"--write_operation":    os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
+				"--additional_columns": string(additional_columns_json),
+			}
+
+			log.Infof("Submitting Transaction %s to Glue Job %s with Arguments %s", order.TransactionId, jobName, jobArguments)
+			submittedJob, glueStartErr := glueClient.StartJobRun(*context, &glue.StartJobRunInput{
+				JobName:   &jobName,
+				Arguments: jobArguments,
+			})
+
+			if glueStartErr != nil {
+				return glueStartErr
+			}
+
+			log.Infof("Transaction %s submitted under Glue Job: %s", order.TransactionId, *submittedJob.JobRunId)
 		}
 
 		// Delete from Queue

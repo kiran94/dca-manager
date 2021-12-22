@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	EnvS3Bucket               string = "DCA_BUCKET"
-	EnvS3ConfigPath           string = "DCA_CONFIG"
-	EnvAllowReal              string = "DCA_ALLOW_REAL"
-	EnvSQSPendingOrdersQueue  string = "DCA_PENDING_ORDERS_QUEUE_URL"
-	EnvS3PendingTransaction   string = "DCA_PENDING_ORDER_S3_PREFIX"
-	EnvS3ProcessedTransaction string = "DCA_PROCESSED_ORDER_S3_PREFIX"
+	EnvS3Bucket                        string = "DCA_BUCKET"
+	EnvS3ConfigPath                    string = "DCA_CONFIG"
+	EnvAllowReal                       string = "DCA_ALLOW_REAL"
+	EnvSQSPendingOrdersQueue           string = "DCA_PENDING_ORDERS_QUEUE_URL"
+	EnvS3PendingTransaction            string = "DCA_PENDING_ORDER_S3_PREFIX"
+	EnvS3ProcessedTransaction          string = "DCA_PROCESSED_ORDER_S3_PREFIX"
+	EnvGlueProcessTransactionJob       string = "DCA_GLUE_PROCESS_TRANSACTION_JOB"
+	EnvGlueProcessTransactionOperation string = "DCA_GLUE_PROCESS_TRANSACTION_OPERATION"
 )
 
 // The root object for DCA configuration
