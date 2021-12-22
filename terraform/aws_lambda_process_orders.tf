@@ -65,7 +65,8 @@ resource "aws_iam_role" "process_order_iam_role" {
             "sqs:ReceiveMessage",
             "sqs:DeleteMessage",
             "sqs:ChangeMessageVisibility",
-            "sqs:GetQueueAttributes"
+            "sqs:GetQueueAttributes",
+            "glue:StartJobRun"
           ]
           Effect = "Allow"
           Resource = [
@@ -74,7 +75,8 @@ resource "aws_iam_role" "process_order_iam_role" {
             "${aws_ssm_parameter.kraken_api_key.arn}",
             "${aws_ssm_parameter.kraken_api_secret.arn}",
             "${aws_sns_topic.lambda_failure_dlq.arn}",
-            "${aws_sqs_queue.pending_orders_queue.arn}"
+            "${aws_sqs_queue.pending_orders_queue.arn}",
+            "${aws_glue_job.load_transactions[0].arn}" # WARN: Need to rethink the enable_anaytics with this
           ]
         }
       ]
