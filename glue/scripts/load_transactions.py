@@ -95,7 +95,7 @@ def main():
 
     # Columns which are not in the source data file
     # but need to be applied to output frame
-    if additional_columns:
+    if additional_columns and additional_columns != "none":
         logger.debug('Adding Partition Columns')
 
         loaded_additional_columns: List[Dict[str, str]] = json.loads(additional_columns)
