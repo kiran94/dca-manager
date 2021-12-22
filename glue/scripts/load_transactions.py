@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+from typing import Dict, List
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -24,12 +26,13 @@ def main():
     glue_context = GlueContext(sc)
 
     args = getResolvedOptions(sys.argv, [
-                              'JOB_NAME', 'input_path', 'output_path', 'glue_database', 'glue_table', 'write_operation'])
+                              'JOB_NAME', 'input_path', 'output_path', 'glue_database', 'glue_table', 'write_operation', 'additional_columns'])
     input_path = args['input_path']
     output_path = args['output_path']
     database_name = args['glue_database']
     table_name = args['glue_table']
     write_operation = args['write_operation']
+    additional_columns = args['additional_columns']
 
     valid_write_operation = ['insert', 'upsert', 'bulk_insert', 'delete']
     if write_operation not in valid_write_operation:
@@ -79,6 +82,19 @@ def main():
     frame = frame.withColumn('fee', frame['fee'].cast('double'))
     frame = frame.withColumn('price', frame['price'].cast('double'))
     frame = frame.withColumn('volume', frame['volume'].cast('double'))
+
+    # Columns which are not in the source data file
+    # but need to be applied to output frame
+    if additional_columns:
+        print('Adding Partition Columns')
+
+        loaded_additional_columns: List[Dict[str, str]] = json.loads(additional_columns)
+        print('Loaded Additional Columns:', loaded_additional_columns)
+
+        if loaded_additional_columns:
+            for column_name, value in loaded_additional_columns.items():
+                print(f'Adding Column {column_name}, Value: {value}')
+                frame = frame.withColumn(column_name, F.lit(value))
 
     frame.printSchema()
     frame.show()

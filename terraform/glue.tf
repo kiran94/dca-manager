@@ -118,6 +118,7 @@ resource "aws_glue_job" "load_transactions" {
     "--glue_database"                    = aws_glue_catalog_database.main[count.index].name
     "--glue_table"                       = "transactions"
     "--write_operation"                  = "bulk_insert"
+    "--additional_columns"               = ""
     "--enable-metrics"                   = ""
     "--enable-glue-datacatalog"          = ""
     "--enable-continuous-cloudwatch-log" = "true"

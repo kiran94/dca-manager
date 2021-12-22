@@ -158,14 +158,21 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 			})
 
 			if s3PutErr != nil {
-				return err
+				return s3PutErr
+			}
+
+			additional_columns := map[string]string{"exchange": strings.ToLower(*exchange.StringValue)}
+			additional_columns_json, addErr := json.Marshal(additional_columns)
+			if addErr != nil {
+				return addErr
 			}
 
 			// Submit Glue Job
 			jobName := os.Getenv(dcaConfig.EnvGlueProcessTransactionJob)
 			jobArguments := map[string]string{
-				"--input_path":      fmt.Sprintf("s3a://%s/%s", s3Bucket, s3Path),
-				"--write_operation": os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
+				"--input_path":         fmt.Sprintf("s3a://%s/%s", s3Bucket, s3Path),
+				"--write_operation":    os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
+				"--additional_columns": string(additional_columns_json),
 			}
 
 			// TODO: Schedule Hudi Load
