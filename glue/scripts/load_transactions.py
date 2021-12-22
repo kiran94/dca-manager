@@ -102,7 +102,7 @@ def main():
     # Write to Output
     hudi_output_path = os.path.join(output_path, table_name)
     print('Using Config:', config, sep='\n')
-    print('Writing to Output: ', hudi_output_path)
+    print(f'Writing with operation {write_operation} to path: {hudi_output_path}')
 
     frame.write \
         .format('hudi') \
