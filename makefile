@@ -33,3 +33,6 @@ pack_process_orders:
 	go get github.com/aws/aws-lambda-go/lambda
 	GOOS=linux go build -o main lambda/process_orders/main.go
 	zip function.zip main
+
+update_all_packages:
+	go get -u all
