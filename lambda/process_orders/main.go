@@ -161,6 +161,9 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 				return s3PutErr
 			}
 
+			// Since we are passing the absolute complete path for the loaded JSON file
+			// the spark won't be able to derive any hive partition columns
+			// so here we are adding the exchange as an additional column
 			additional_columns := map[string]string{"exchange": strings.ToLower(*exchange.StringValue)}
 			additional_columns_json, addErr := json.Marshal(additional_columns)
 			if addErr != nil {
