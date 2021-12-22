@@ -125,3 +125,8 @@ resource "aws_lambda_event_source_mapping" "source_sqs_to_process_orders" {
   event_source_arn = aws_sqs_queue.pending_orders_queue.arn
   function_name    = aws_lambda_function.process_orders.function_name
 }
+
+# OUTPUTS
+output "aws_lambda_process_orders" {
+  value = aws_lambda_function.process_orders.function_name
+}

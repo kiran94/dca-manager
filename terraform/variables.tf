@@ -42,6 +42,7 @@ variable "KRAKEN_API_SECRET" {
   default     = "dummy"
 }
 
+// GLUE
 variable "glue_connections" {
   type        = list(string)
   description = "The AWS Glue Connector for Apache Hudi"

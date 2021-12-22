@@ -135,6 +135,14 @@ resource "github_actions_secret" "aws_glue_scripts_prefix" {
 }
 
 # OUTPUTS
-output "load_transactions_job" {
+output "glue_load_transactions_job" {
   value = aws_glue_job.load_transactions.id
+}
+
+output "glue_hudi_datalake_path" {
+  value = local.glue_hudi_prefix
+}
+
+output "glue_database" {
+  value = aws_glue_catalog_database.main.name
 }

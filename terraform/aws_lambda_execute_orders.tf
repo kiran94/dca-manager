@@ -174,7 +174,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_execute_orders" {
   source_arn    = aws_cloudwatch_event_rule.aws_lambda_execute_orders_schedule[count.index].arn
 }
 
-# Outputs
+# OUTPUTS
 output "aws_lambda_execute_orders" {
   value = aws_lambda_function.execute_orders.function_name
 }
