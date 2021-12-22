@@ -178,10 +178,6 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 				"--additional_columns": string(additional_columns_json),
 			}
 
-			// TODO: Schedule Hudi Load
-			// TODO: Need to check if the job exists
-			// in case enable_analytics = false
-
 			log.Infof("Submitting Transaction %s to Glue Job %s with Arguments %s", order.TransactionId, jobName, jobArguments)
 			submittedJob, glueStartErr := glueClient.StartJobRun(*context, &glue.StartJobRunInput{
 				JobName:   &jobName,

@@ -12,6 +12,10 @@ variable "execute_orders_schedules" {
     {
       description         = "At 6:00 UTC on every Friday"
       schedule_expression = "cron(0 6 ? * FRI *)"
+    },
+    {
+      description         = "At 19:45 UTC on every Wednesday"
+      schedule_expression = "cron(45 19 ? * WED *)"
     }
   ]
 }
@@ -36,13 +40,6 @@ variable "KRAKEN_API_KEY" {
 variable "KRAKEN_API_SECRET" {
   description = "The Kraken API Secret"
   default     = "dummy"
-}
-
-// ANALYTICS
-variable "enable_analytics" {
-  type        = bool
-  description = "Enables Glue/Hudi Infrastructure"
-  default     = true
 }
 
 variable "glue_connections" {
