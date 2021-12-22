@@ -1,6 +1,8 @@
+import json
+import logging
 import os
 import sys
-import json
+import pprint
 from typing import Dict, List
 
 from pyspark.sql import SparkSession
@@ -14,8 +16,15 @@ except ImportError:
     pass
 
 
+LOGGING_FORMAT = os.environ.get("LOGGING_FORMAT", logging.BASIC_FORMAT)
+LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", logging.INFO)
+
+logging.basicConfig(format=LOGGING_FORMAT, level=LOGGING_LEVEL)
+logger = logging.getLogger()
+
+
 def main():
-    print('Starting Glue Job')
+    logging.info('Starting Glue Job')
 
     spark = SparkSession.builder \
         .config('spark.serializer', 'org.apache.spark.serializer.KryoSerializer') \
@@ -27,6 +36,8 @@ def main():
 
     args = getResolvedOptions(sys.argv, [
                               'JOB_NAME', 'input_path', 'output_path', 'glue_database', 'glue_table', 'write_operation', 'additional_columns'])
+
+    logging.debug(args)
     input_path = args['input_path']
     output_path = args['output_path']
     database_name = args['glue_database']
@@ -36,7 +47,7 @@ def main():
 
     valid_write_operation = ['insert', 'upsert', 'bulk_insert', 'delete']
     if write_operation not in valid_write_operation:
-        print(f'write_operation must be one of options: {valid_write_operation}. But was: {write_operation}')
+        logger.error(f'write_operation must be one of options: {valid_write_operation}. But was: {write_operation}')
         exit(1)
 
     job = Job(glue_context)
@@ -46,6 +57,7 @@ def main():
     key = 'transaction_id,close_time'
     precombine = 'transaction_id'
 
+    logger.debug(f'Using Partition Path {partition_path}, Key {key}, Precombine: {precombine}')
     config = {
         # Hudi
         'hoodie.table.name': table_name,
@@ -68,17 +80,15 @@ def main():
     }
 
     # Read data from the JSON files
-    print('Reading from ', input_path)
+    logger.info(f'Reading from {input_path}')
     frame = spark.read.json(input_path)
 
     frame.printSchema()
     frame.show()
 
-    print('Formatting Columns')
-    frame = frame.withColumn('close_time', F.from_unixtime(
-        F.col('close_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
-    frame = frame.withColumn('open_time', F.from_unixtime(
-        F.col('open_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
+    logger.debug('Formatting Columns')
+    frame = frame.withColumn('close_time', F.from_unixtime(F.col('close_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
+    frame = frame.withColumn('open_time', F.from_unixtime(F.col('open_time'), 'yyyy-MM-dd HH:mm:ss.SS').cast('timestamp'))
     frame = frame.withColumn('fee', frame['fee'].cast('double'))
     frame = frame.withColumn('price', frame['price'].cast('double'))
     frame = frame.withColumn('volume', frame['volume'].cast('double'))
@@ -86,14 +96,14 @@ def main():
     # Columns which are not in the source data file
     # but need to be applied to output frame
     if additional_columns:
-        print('Adding Partition Columns')
+        logger.debug('Adding Partition Columns')
 
         loaded_additional_columns: List[Dict[str, str]] = json.loads(additional_columns)
-        print('Loaded Additional Columns:', loaded_additional_columns)
+        logger.debug(f'Loaded Additional Columns {loaded_additional_columns}')
 
         if loaded_additional_columns:
             for column_name, value in loaded_additional_columns.items():
-                print(f'Adding Column {column_name}, Value: {value}')
+                logger.info(f'Adding Column {column_name}, Value: {value}')
                 frame = frame.withColumn(column_name, F.lit(value))
 
     frame.printSchema()
@@ -101,8 +111,8 @@ def main():
 
     # Write to Output
     hudi_output_path = os.path.join(output_path, table_name)
-    print('Using Config:', config, sep='\n')
-    print(f'Writing with operation {write_operation} to path: {hudi_output_path}')
+    logger.info('Hudi Configuration: \n ' + pprint.pformat(config))
+    logger.info(f'Writing with operation {write_operation} to path: {hudi_output_path}')
 
     frame.write \
         .format('hudi') \
