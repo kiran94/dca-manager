@@ -49,11 +49,11 @@ terraform apply
 git remote add origin $(terraform output -raw github_repository_ssh_clone_url)
 ```
 
-*Note some coordination might be required here. Where the lambda function cannot be created without the zip file existing in the S3 location first. Therefore this may need to be at least uploaded to S3 first before `terraform apply` will complete successfully.*
+*Note some coordination might be required here. Where the lambda function cannot be created without the zip file existing in the S3 location first. Therefore this may need to be at least uploaded to S3 first before `terraform apply` will complete successfully. Once everything is in place then CI will handle deploying any modifications*
 
 ### Hudi Integration
 
-This solution also provides the ability load processed transactions into an [Apache Hudi Table](https://hudi.apache.org/) which can be accessed with [Amazon Athena](https://aws.amazon.com/athena) for further analytics processing.
+This solution also loads processed transactions into an [Apache Hudi Table](https://hudi.apache.org/) which can be accessed with [Amazon Athena](https://aws.amazon.com/athena) for further analytics processing.
 
 In order to do this, the [AWS Glue Connector for Apache Hudi](https://aws.amazon.com/marketplace/server/procurement?productId=e918d411-44a4-4b8d-b995-e101d7ef670b) must be applied to the target AWS account. Unfortunately I am not able to find a way to do this via terraform but you can follow these [instructions](https://aws.amazon.com/blogs/big-data/writing-to-apache-hudi-tables-using-aws-glue-connector/) to get setup. In this solution we use Spark 3 and therefore the default connection name we apply is `hudi-connection3`.
 
@@ -65,20 +65,26 @@ Once the Infrastructure has been applied/deployed then it can be run either with
 aws glue start-job-run --job-name $(terraform -chdir=terraform output -json | jq --raw-output '.glue_load_transactions_job.value')
 ```
 
+Natually, you will need some transactions executed in order for this to be useful.
+
 ### Code
 
 Assuming you are at the root of the repository.
+
+
+Set Required Environment Variables:
 
 ```sh
 export DCA_BUCKET=$(terraform -chdir=terraform output -raw bucket)
 export DCA_CONFIG=$(terraform -chdir=terraform output -raw config_path)
 export DCA_PENDING_ORDERS_QUEUE_URL=$(terraform -chdir=terraform output -raw pending_orders_queue_url)
 export DCA_PENDING_ORDER_S3_PREFIX=$(terraform -chdir=terraform output -raw aws_lambda_pending_order_path)
+```
 
-make
+Run or Debug:
 
-# for debugging
-make debug
+```sh
+make # or make debug
 ```
 
 ### Running
@@ -94,11 +100,13 @@ This will pull data from a combination of sources such as the environment and SS
 
 By default, dca-manager should not execute real transactions on an exchange without the `DCA_ALLOW_REAL` being set to any value.
 
+*Please make sure to inspect the code and make sure everything is in order before attaching a real account and running this in production to avoid unexpected transactions.*
+
 ## Configuration
 
 The configuration drives the orders which are executed regularly. At a given interval of time, the configuration is pulled and the process runs through the list of orders.
 
-For example if you wanted to setup a regular order for 5 `ADAGBP` via kraken then the configuration might look like this:
+For example if you wanted to setup a regular market order for 5 `ADAGBP` via kraken then the configuration might look like this:
 
 *config.json*
 
@@ -152,56 +160,4 @@ See [variables.tf](./terraform/variables.tf)
 
 ## Architecture
 
-```
-
-                                                          ╔═══════════════╗
-                                                          ║               ║
-                                        ┌───────────────► ║  KRAKEN API   ║ ───────────────────┐
-                                        │                 ║               ║                    │
-                                  submit orders           ╚═══════════════╝          get executed order details
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                    ╔═════════╗                       ▼
-╔════════════════════╗         ┌────────────────┐            ║         ║                ┌────────────────┐
-║     Schedule       ║───────► │ Execute Orders │ ────────►  ║   SQS   ║ ────────────►  │ Process Orders │
-║(Cloudwatch Events) ║         │   AWS Lambda   │            ║         ║                │   AWS Lambda   │
-╚════════════════════╝         └────────────────┘            ╚═════════╝                └────────────────┘
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                                        │                                                      │
-                               store pending order                                      store order details
-                                        │                    ╔═════════╗                       │
-                                        │                    ║         ║                       │
-                                        └──────────────────► ║   S3    ║ ◄─────────────────────┘
-                                                             ║         ║
-                                                             ╚═════════╝
-                                                                  │
-                                                                  │
-                                                                  │
-                                                                  ▼
-                                                ╔════════════════════════════════════╗
-                                                ║           AWS Glue Job             ║
-                                                ╚════════════════════════════════════╝
-                                                                  │
-                                                                  │
-                                                                  ▼
-                                                ╔════════════════════════════════════╗
-                                                ║           AWS Athena               ║
-                                                ╚════════════════════════════════════╝
-                                                                  │
-                                                                  │
-                                                                  ▼
-                                                ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-                                                ┃     Potential Further Analytics    ┃
-                                                ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-```
-
-*diagram created using [venn](https://github.com/jbyuki/venn.nvim)*
+![architecture_diagram](docs/architecture_diagram.png)
