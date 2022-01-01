@@ -2,7 +2,7 @@ resource "github_repository" "main" {
 
   name        = "dca-manager"
   description = "Automated Dollar Cost Average Process"
-  visibility  = "private"
+  visibility  = "public"
 
   has_projects  = false
   has_wiki      = false
@@ -19,6 +19,8 @@ resource "github_repository" "main" {
     "investing",
     "kraken",
     "trading",
+    "hudi",
+    "glue",
   ]
 }
 
