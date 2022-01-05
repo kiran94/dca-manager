@@ -22,7 +22,7 @@ variable "execute_orders_schedules" {
 
 variable "lambda_timeout_seconds" {
   type    = number
-  default = 3
+  default = 300
 }
 
 // ALERTS
