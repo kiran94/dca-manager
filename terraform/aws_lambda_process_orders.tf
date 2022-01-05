@@ -8,7 +8,7 @@ resource "aws_lambda_function" "process_orders" {
 
   s3_bucket = aws_s3_bucket.main.bucket
   s3_key    = "${local.lambda_s3_scripts_prefix}/${local.lambda_process_order_object}"
-  timeout   = 3
+  timeout   = var.lambda_timeout_seconds
 
   environment {
     variables = {
