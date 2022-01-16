@@ -15,7 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	krakenapi "github.com/beldur/kraken-go-api-client"
+	"github.com/kiran94/dca-manager/configuration"
 	dcaConfig "github.com/kiran94/dca-manager/configuration"
 	"github.com/kiran94/dca-manager/orders"
 	log "github.com/sirupsen/logrus"
@@ -64,8 +66,10 @@ func HandleRequest(c context.Context, event awsEvents.SQSEvent) (*string, error)
 func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEvent awsEvents.SQSEvent) error {
 	log.Info("Getting Transaction Details")
 
+	ssmAccess := configuration.SSM{Client: ssm.NewFromConfig(*awsConfig)}
+
 	// Call Kraken API
-	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*awsConfig, *context)
+	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*context, &ssmAccess)
 	if ssmErr != nil {
 		return ssmErr
 	}

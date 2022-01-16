@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -37,16 +35,24 @@ type DCAOrder struct {
 	Enabled   bool   `json:"enabled"`
 }
 
+type S3Access interface {
+	GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+}
+
+type S3 struct {
+	Client *s3.Client
+}
+
+func (s *S3) GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
+	return s.Client.GetObject(ctx, params, optFns...)
+}
+
 // Gets DCA Configuration from S3
-func GetDCAConfiguration(config aws.Config, c context.Context) (*DCAConfig, error) {
+func GetDCAConfiguration(ctx context.Context, s S3Access, s3Bucket *string, s3ConfigPath *string) (*DCAConfig, error) {
 
-	s3Bucket := os.Getenv(EnvS3Bucket)
-	s3ConfigPath := os.Getenv(EnvS3ConfigPath)
-	s3Client := s3.NewFromConfig(config)
-
-	configObject, err := s3Client.GetObject(c, &s3.GetObjectInput{
-		Bucket: &s3Bucket,
-		Key:    &s3ConfigPath,
+	configObject, err := s.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: s3Bucket,
+		Key:    s3ConfigPath,
 	})
 
 	if err != nil {
@@ -57,6 +63,7 @@ func GetDCAConfiguration(config aws.Config, c context.Context) (*DCAConfig, erro
 	if err != nil {
 		return nil, err
 	}
+	defer configObject.Body.Close()
 
 	var dcaConfig DCAConfig
 	jsonErr := json.Unmarshal(configObjectBytes, &dcaConfig)

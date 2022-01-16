@@ -17,7 +17,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	krakenapi "github.com/beldur/kraken-go-api-client"
+	"github.com/kiran94/dca-manager/configuration"
 	dcaConfig "github.com/kiran94/dca-manager/configuration"
 	"github.com/kiran94/dca-manager/orders"
 	log "github.com/sirupsen/logrus"
@@ -45,14 +47,13 @@ func main() {
 	log.Info("Lambda Execution Done.")
 }
 
-
 func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string, error) {
 	awsConfig, err := awsConfig.LoadDefaultConfig(c)
 	if err != nil {
 		return nil, err
 	}
 
-	pendingOrders, err := ExecuteOrders(&awsConfig, &c)
+	pendingOrders, err := ExecuteOrders(c, &awsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -67,18 +68,23 @@ func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string,
 }
 
 // Executes the configured orders.
-func ExecuteOrders(awsConfig *aws.Config, context *context.Context) (*[]orders.PendingOrders, error) {
+func ExecuteOrders(ctx context.Context, awsConfig *aws.Config) (*[]orders.PendingOrders, error) {
 	log.Info("Executing Orders")
 
 	// Get DCA Configuration
-	dcaConf, err := dcaConfig.GetDCAConfiguration(*awsConfig, *context)
+	s3Access := configuration.S3{Client: s3.NewFromConfig(*awsConfig)}
+	s3Bucket := os.Getenv(configuration.EnvS3Bucket)
+	s3Config := os.Getenv(configuration.EnvS3ConfigPath)
+	ssmAccess := configuration.SSM{Client: ssm.NewFromConfig(*awsConfig)}
+
+	dcaConf, err := dcaConfig.GetDCAConfiguration(ctx, &s3Access, &s3Bucket, &s3Config)
 	if err != nil {
 		return nil, err
 	}
 	log.Debug(dcaConf)
 
 	// Call Kraken API
-	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*awsConfig, *context)
+	key, secret, ssmErr := dcaConfig.GetKrakenDetails(ctx, &ssmAccess)
 	if ssmErr != nil {
 		return nil, ssmErr
 	}
@@ -129,7 +135,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) (*[]orders.P
 		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
 
 		log.Infof("Uploading to Bucket %s, Key %s", s3Bucket, s3Path)
-		s3Client.PutObject(*context, &s3.PutObjectInput{
+		s3Client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: &s3Bucket,
 			Key:    &s3Path,
 			Body:   bytes.NewReader(orderResultBytes),
@@ -142,7 +148,7 @@ func ExecuteOrders(awsConfig *aws.Config, context *context.Context) (*[]orders.P
 			S3Key:         s3Path,
 		}
 
-		submitErr := SubmitPendingOrder(sqsClient, &po, context, order.Exchange, allowReal)
+		submitErr := SubmitPendingOrder(sqsClient, &po, &ctx, order.Exchange, allowReal)
 		if submitErr != nil {
 			return nil, submitErr
 		}
