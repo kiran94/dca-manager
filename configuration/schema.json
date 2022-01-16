@@ -5,17 +5,21 @@
     "properties": {
         "orders": {
             "type": "array",
+            "description": "List of Orders which should be regularly executed",
             "items": {
                 "type": "object",
+                "description": "Represents a DCA order",
                 "properties": {
                     "exchange": {
                         "type": "string",
+                        "description": "The Exchange to execute the order on",
                         "enum": [
                             "kraken"
                         ]
                     },
                     "direction": {
                         "type": "string",
+                        "description": "The direction in which the order must happen",
                         "enum": [
                             "buy",
                             "sell"
@@ -23,6 +27,7 @@
                     },
                     "ordertype": {
                         "type": "string",
+                        "description": "The Type of order to execute",
                         "enum": [
                             "market",
                             "limit"
@@ -30,16 +35,24 @@
                     },
                     "volume": {
                         "type": "string",
+                        "description": "The volume of pair that should be executed",
                         "pattern": "[0-9]+"
                     },
                     "pair": {
-                        "type": "string"
+                        "description": "The pair e.g GBPUSD to ",
+                        "type": "string",
+                        "examples": [
+                            "BTCGBP",
+                            "ETHGBP"
+                        ]
                     },
                     "validate": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Validate inputs only. Do not submit order."
                     },
                     "enabled": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "if the order is enabled or not"
                     }
                 },
                 "required": [
