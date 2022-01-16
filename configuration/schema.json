@@ -1,0 +1,57 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "title": "Dollar Cost Average Configuration Schema",
+    "type": "object",
+    "properties": {
+        "orders": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "exchange": {
+                        "type": "string",
+                        "enum": [
+                            "kraken"
+                        ]
+                    },
+                    "direction": {
+                        "type": "string",
+                        "enum": [
+                            "buy",
+                            "sell"
+                        ]
+                    },
+                    "ordertype": {
+                        "type": "string",
+                        "enum": [
+                            "market",
+                            "limit"
+                        ]
+                    },
+                    "volume": {
+                        "type": "string",
+                        "pattern": "[0-9]+"
+                    },
+                    "pair": {
+                        "type": "string"
+                    },
+                    "validate": {
+                        "type": "boolean"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "exchange",
+                    "direction",
+                    "ordertype",
+                    "volume",
+                    "pair",
+                    "validate",
+                    "enabled"
+                ]
+            }
+        }
+    }
+}
