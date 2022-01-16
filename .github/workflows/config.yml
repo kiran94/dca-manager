@@ -1,0 +1,32 @@
+name: config
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: configuration
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+
+      - name: Install jsonschema
+        run: python -m pip install jsonschema
+
+      - name: Validate Example Config
+        run: jsonschema -i example_config.json schema.json
