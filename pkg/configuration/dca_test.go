@@ -11,28 +11,22 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/kiran94/dca-manager/pkg"
 )
 
-type MockS3Access struct {
-	mock.Mock
-}
-
-func (s MockS3Access) GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
-	args := s.Called(ctx, params, optFns)
-	return args.Get(0).(*s3.GetObjectOutput), args.Error(1)
-}
 
 // Ensures when the object cannot be found
 // then an err is returned
 func TestGetDCAConfigurationErrorGettingConfig(t *testing.T) {
-	s3Access := MockS3Access{}
+	s3Access := pkg.MockS3Access{}
 	s3Bucket := "myBucket"
 	s3ConfigPath := "my/config.json"
 
 	var o *s3.GetObjectOutput = nil
 	s3Access.On("GetObject", mock.Anything, &s3.GetObjectInput{Bucket: &s3Bucket, Key: &s3ConfigPath}, mock.Anything).Return(o, errors.New("config not found")).Once()
 
-	resultConfig, err := GetDCAConfiguration(context.Background(), s3Access, &s3Bucket, &s3ConfigPath)
+	dcaConfig := DCAConfiguration{}
+	resultConfig, err := dcaConfig.GetDCAConfiguration(context.Background(), s3Access, &s3Bucket, &s3ConfigPath)
 
 	s3Access.AssertExpectations(t)
 	assert.Nil(t, resultConfig)
@@ -44,7 +38,7 @@ func TestGetDCAConfigurationErrorGettingConfig(t *testing.T) {
 // Ensures when the object cannot be derserialised
 // an error is raised
 func TestGetDCAConfigurationCouldNotUnmarshalJson(t *testing.T) {
-	s3Access := MockS3Access{}
+	s3Access := pkg.MockS3Access{}
 	s3Bucket := "myBucket"
 	s3ConfigPath := "my/config.json"
 
@@ -54,7 +48,8 @@ func TestGetDCAConfigurationCouldNotUnmarshalJson(t *testing.T) {
 	o := &s3.GetObjectOutput{Body: bodyCloser}
 	s3Access.On("GetObject", mock.Anything, &s3.GetObjectInput{Bucket: &s3Bucket, Key: &s3ConfigPath}, mock.Anything).Return(o, nil).Once()
 
-	resultConfig, err := GetDCAConfiguration(context.Background(), s3Access, &s3Bucket, &s3ConfigPath)
+	dcaConfig := DCAConfiguration{}
+	resultConfig, err := dcaConfig.GetDCAConfiguration(context.Background(), s3Access, &s3Bucket, &s3ConfigPath)
 
 	s3Access.AssertExpectations(t)
 	assert.Nil(t, resultConfig)
@@ -67,7 +62,7 @@ func TestGetDCAConfigurationCouldNotUnmarshalJson(t *testing.T) {
 // can be retrieved and deserialised
 // it is returned
 func TestGetDCAConfiguration(t *testing.T) {
-	s3Access := MockS3Access{}
+	s3Access := pkg.MockS3Access{}
 	s3Bucket := "myBucket"
 	s3ConfigPath := "my/config.json"
 
@@ -80,7 +75,8 @@ func TestGetDCAConfiguration(t *testing.T) {
 	o := &s3.GetObjectOutput{Body: bodyCloser}
 	s3Access.On("GetObject", mock.Anything, &s3.GetObjectInput{Bucket: &s3Bucket, Key: &s3ConfigPath}, mock.Anything).Return(o, nil).Once()
 
-	resultConfig, err := GetDCAConfiguration(context.Background(), s3Access, &s3Bucket, &s3ConfigPath)
+	config := DCAConfiguration{}
+	resultConfig, err := config.GetDCAConfiguration(context.Background(), s3Access, &s3Bucket, &s3ConfigPath)
 
 	assert.NotNil(t, resultConfig)
 	assert.Nil(t, err)

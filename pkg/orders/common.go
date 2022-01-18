@@ -1,7 +1,7 @@
 package orders
 
 import (
-	config "github.com/kiran94/dca-manager/configuration"
+	config "github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/shopspring/decimal"
 )
 

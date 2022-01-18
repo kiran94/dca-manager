@@ -6,7 +6,7 @@ import (
 	"time"
 
 	krakenapi "github.com/beldur/kraken-go-api-client"
-	config "github.com/kiran94/dca-manager/configuration"
+	config "github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )

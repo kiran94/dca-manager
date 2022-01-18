@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	krakenapi "github.com/beldur/kraken-go-api-client"
-	"github.com/kiran94/dca-manager/configuration"
+	"github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

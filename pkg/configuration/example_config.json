@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/kiran94/dca-manager/main/configuration/schema.json",
+  "$schema": "https://raw.githubusercontent.com/kiran94/dca-manager/main/pkg/configuration/schema.json",
   "orders": [
     {
       "exchange": "kraken",

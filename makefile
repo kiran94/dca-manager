@@ -9,7 +9,7 @@ build_process_orders:
 	go build -o main lambda/process_orders/main.go
 
 test:
-	go test
+	go test ./pkg/configuration/ ./pkg/orders
 
 lint:
 	go vet
