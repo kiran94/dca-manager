@@ -19,7 +19,7 @@ type PendingOrderQueue interface {
 // Submits the given pending order to queue.
 type PendingOrderSubmitter struct{}
 
-func (p *PendingOrderSubmitter) SubmitPendingOrder(ctx context.Context, sc pkg.SQSAccess, po *PendingOrders, exchange string, real bool, sqsQueue string) error {
+func (p PendingOrderSubmitter) SubmitPendingOrder(ctx context.Context, sc pkg.SQSAccess, po *PendingOrders, exchange string, real bool, sqsQueue string) error {
 	sqsMessageBodyBytes, err := json.Marshal(po)
 	if err != nil {
 		return err

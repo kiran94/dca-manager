@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,7 +29,18 @@ type MockSSMClient struct {
 	mock.Mock
 }
 
-func (s *MockSSMClient) GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error) {
+func (s MockSSMClient) GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error) {
 	args := s.Called(ctx, params, optFns)
 	return args.Get(0).(*ssm.GetParameterOutput), args.Error(1)
 }
+
+// SQS
+type MockSQSAccess struct {
+	mock.Mock
+}
+
+func (s MockSQSAccess) SendMessage(ctx context.Context, params *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
+	args := s.Called(ctx, params, optFns)
+	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
+}
+

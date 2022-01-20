@@ -19,11 +19,11 @@ type S3 struct {
 	Client *s3.Client
 }
 
-func (s *S3) GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
+func (s S3) GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
 	return s.Client.GetObject(ctx, params, optFns...)
 }
 
-func (s *S3) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
+func (s S3) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
 	return s.Client.PutObject(ctx, params, optFns...)
 }
 
@@ -37,7 +37,7 @@ type SSM struct {
 	Client *ssm.Client
 }
 
-func (s *SSM) GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error) {
+func (s SSM) GetParameter(ctx context.Context, params *ssm.GetParameterInput, optFns ...func(*ssm.Options)) (*ssm.GetParameterOutput, error) {
 	return s.Client.GetParameter(ctx, params, optFns...)
 }
 
@@ -51,6 +51,6 @@ type SQS struct {
 	Client *sqs.Client
 }
 
-func (s *SQS) SendMessage(ctx context.Context, params *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
+func (s SQS) SendMessage(ctx context.Context, params *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
 	return s.Client.SendMessage(ctx, params, optFns...)
 }
