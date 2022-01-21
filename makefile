@@ -3,13 +3,13 @@ GO_OUT=main
 build: build_execute_orders build_process_orders
 
 build_execute_orders:
-	go build -o main lambda/execute_orders/main.go
+	go build -o $(GO_OUT) lambda/execute_orders/main.go
 
 build_process_orders:
-	go build -o main lambda/process_orders/main.go
+	go build -o $(GO_OUT) lambda/process_orders/main.go
 
 test:
-	go test ./pkg/configuration/ ./pkg/orders
+	go test ./pkg/configuration/ ./pkg/orders ./lambda/execute_orders ./lambda/process_orders
 
 lint:
 	go vet
