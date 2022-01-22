@@ -128,7 +128,7 @@ For example if you wanted to setup a regular market order for 5 `ADAGBP` via kra
 }
 ```
 
-See [example_config.json](./configuration/example_config.json) will by default upload to the designated location in S3 via terraform.
+See [example_config.json](./pkg/configuration/example_config.json) will by default upload to the designated location in S3 via terraform.
 
 ## Schedules
 
