@@ -8,7 +8,7 @@ import (
 	krakenapi "github.com/beldur/kraken-go-api-client"
 	config "github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/shopspring/decimal"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type KrakenAccess interface {
@@ -27,10 +27,17 @@ func (ko *KrakenOrderer) New(client KrakenAccess) {
 // Execute the given DCA Order on the Kraken Exchange
 func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error) {
 
-	log.Infof("Making Order: %s %s %s (%s)", order.Direction, order.Volume, order.Pair, order.OrderType)
+	logrus.WithFields(logrus.Fields{
+		"direction": order.Direction,
+		"volume":    order.Volume,
+		"pair":      order.Pair,
+		"type":      order.OrderType,
+		"exchange":  order.Exchange,
+		"enabled":   order.Enabled,
+	}).Info("Making Order")
 
 	if !order.Enabled {
-		log.Warn("order disabled, skipping")
+		logrus.Warn("order disabled, skipping")
 		return nil, nil
 	}
 
@@ -39,10 +46,10 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 		return nil, err
 	}
 
-	log.Infof("Order Response: %s", addOrderResponse)
+	logrus.WithField("transactionId", addOrderResponse.TransactionIds).Info("Order Response")
 
 	if len(addOrderResponse.TransactionIds) > 1 {
-		log.Warnf("Received more then one TransactionIds %s", addOrderResponse.TransactionIds)
+		logrus.Warnf("Received more then one TransactionIds %s", addOrderResponse.TransactionIds)
 	} else if len(addOrderResponse.TransactionIds) == 0 {
 		return nil, errors.New("No Transactions ids received")
 	}
@@ -66,7 +73,7 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 	txids := strings.Join(transactionId, ",")
 	args := make(map[string]string, 1)
 
-	log.Infof("Getting Details for Transactions %s", txids)
+	logrus.WithField("transactionId", txids).Info("Getting Details for Transactions")
 	transactions, err := ko.Client.QueryOrders(txids, args)
 	if err != nil {
 		return nil, err
@@ -74,10 +81,10 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 
 	completeOrders := make([]OrderComplete, len(*transactions))
 
-	log.Info("Mapping back response to transactions")
+	logrus.Info("Mapping back response to transactions")
 	index := 0
 	for transactionId := range *transactions {
-		log.Debugf("Mapping %s", transactionId)
+		logrus.WithField("transactionId", transactionId).Debug("Mapping Transaction")
 
 		co := (*transactions)[transactionId]
 		orderComplete := OrderComplete{
@@ -93,7 +100,11 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 			CloseTime:      co.CloseTime,
 		}
 
-		log.Debugf("Complete Order: Transaction %s: Order: %v \n", transactionId, orderComplete)
+		logrus.WithFields(logrus.Fields{
+			"transactionId": transactionId,
+			"orderComplete": orderComplete,
+		}).Debug("Complete Order")
+
 		completeOrders[index] = orderComplete
 		index += 1
 	}

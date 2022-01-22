@@ -242,7 +242,8 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 
 			logrus.WithFields(logrus.Fields{
 				"glueJobName":       jobName,
-				"inputPath":         jobArguments["--input_path"],
+				"inputS3Bucket":     s3Bucket,
+				"inputPath":         s3Path,
 				"writeOperation":    jobArguments["--write_operation"],
 				"additionalColumns": jobArguments["--additional_columns"],
 			}).Info("Submitting Glue Job")

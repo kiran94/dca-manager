@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/kiran94/dca-manager/pkg"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type PendingOrderQueue interface {
@@ -45,7 +45,13 @@ func (p PendingOrderSubmitter) SubmitPendingOrder(ctx context.Context, sc pkg.SQ
 		},
 	}
 
-	log.Infof("Submitting Transaction %s to Queue %s", po.TransactionId, sqsQueue)
+	logrus.WithFields(logrus.Fields{
+		"transactionId": po.TransactionId,
+		"queue":         sqsQueue,
+		"real":          real,
+		"exchange":      exchange,
+	}).Info("Submitting Transaction to Queue")
+
 	_, sqsErr := sc.SendMessage(ctx, sqsMessageInput)
 
 	if sqsErr != nil {
