@@ -20,7 +20,6 @@ import (
 	"github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/kiran94/dca-manager/pkg/orders"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -85,25 +84,20 @@ func init() {
 }
 
 func main() {
-	log.SetOutput(os.Stdout)
-	log.SetReportCaller(false)
-	log.Info("Lambda Execution Starting")
+	logrus.SetOutput(os.Stdout)
+	logrus.SetReportCaller(false)
+	logrus.Info("Lambda Execution Starting")
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") != "" {
-
-		log.SetFormatter(&log.TextFormatter{
-			DisableColors: true,
-			FullTimestamp: true,
-		})
-		log.SetFormatter(&log.JSONFormatter{})
-
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 		awsLambda.Start(HandleRequest)
 
 	} else {
+		logrus.SetFormatter(&logrus.TextFormatter{})
 		HandleRequestLocally()
 	}
 
-	log.Info("Lambda Execution Done.")
+	logrus.Info("Lambda Execution Done.")
 }
 
 func HandleRequest(ctx context.Context, event awsEvents.SQSEvent) (*string, error) {
@@ -118,7 +112,7 @@ func HandleRequest(ctx context.Context, event awsEvents.SQSEvent) (*string, erro
 // Pulls from the Queue and gets the details from the downstream Exchange.
 // Pushes the details to S3 and marks as done from the Queue.
 func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfig *AppConfig, sqsEvent awsEvents.SQSEvent) error {
-	log.Info("Getting Transaction Details")
+	logrus.Info("Processing Transaction Details")
 
 	if len(sqsEvent.Records) == 0 {
 		return fmt.Errorf("No SQS Messages found, returning")
@@ -131,15 +125,24 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 
 	// Process Each of the SQS Messages
 	for _, message := range sqsEvent.Records {
-		log.Infof("Processing SQS Message: %s from %s", message.MessageId, message.EventSourceARN)
-
 		// Extract Details from the Message
 		exchange := message.MessageAttributes["Exchange"]
 		realAtt := message.MessageAttributes["Real"]
 
+		logrus.WithFields(logrus.Fields{
+			"messageId":      message.MessageId,
+			"eventSourceArn": message.EventSourceARN,
+			"exchange":       *exchange.StringValue,
+			"real":           *realAtt.StringValue,
+		}).Info("Processing SQS Message")
+
 		// If the message is a fake/testing message, mark as deleted and continue
 		if *realAtt.StringValue == "false" {
-			log.Warnf("Received SQS message which was not real. Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
+			logrus.WithFields(logrus.Fields{
+				"messageId": message.MessageId,
+				"queue":     message.EventSourceARN,
+			}).Warn("Received SQS message which was not real. Deleting from Queue.")
+
 			_, err = dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 				QueueUrl:      &message.EventSourceARN,
 				ReceiptHandle: &message.ReceiptHandle,
@@ -148,7 +151,6 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 			if err != nil {
 				return err
 			}
-
 			continue
 		}
 
@@ -161,12 +163,16 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 		var po orders.PendingOrders
 		err := json.Unmarshal(messageBytes, &po)
 		if err != nil {
-			log.Errorf("Unable to unmarshal json from Message %s", message.MessageId)
+			logrus.Errorf("Unable to unmarshal json from Message %s", message.MessageId)
 			return err
 		}
 
 		// Process the Transaction
-		log.Infof("Processing Exchange: %s, Transactions: %s", *exchange.StringValue, po.TransactionId)
+		logrus.WithFields(logrus.Fields{
+			"exchange":      *exchange.StringValue,
+			"transactionId": po.TransactionId,
+		}).Info("Processing Transaction")
+
 		exchangeOrderer, ok := (*o)[*exchange.StringValue]
 		if !ok {
 			return fmt.Errorf("exchange %s was not configured", *exchange.StringValue)
@@ -176,8 +182,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 		if err != nil {
 			return err
 		}
-
-		log.Debugf("Orders from processed transactions: %v", orders)
+		logrus.WithField("order", orders).Debug("Orders from processed transaction")
 
 		// Upload Details to S3
 		s3Bucket := appConfig.s3bucket
@@ -186,7 +191,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 		for _, order := range *orders {
 
 			if order.TransactionId == "" {
-				log.Warnf("Found an order with no transaction id: %v", order)
+				logrus.Warnf("Found an order with no transaction id: %v", order)
 				continue
 			}
 
@@ -202,15 +207,20 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 				return err
 			}
 
-			log.Infof("Uploading Transaction %s to Bucket %s, Key %s", order.TransactionId, s3Bucket, s3Path)
-			_, s3PutErr := dcaServices.s3Access.PutObject(ctx, &s3.PutObjectInput{
+			logrus.WithFields(logrus.Fields{
+				"transactionId": order.TransactionId,
+				"s3bucket":      s3Bucket,
+				"s3path":        s3Path,
+			}).Info("Uploading Transaction result to S3")
+
+			_, err = dcaServices.s3Access.PutObject(ctx, &s3.PutObjectInput{
 				Bucket: &s3Bucket,
 				Key:    &s3Path,
 				Body:   bytes.NewReader(orderBytes),
 			})
 
-			if s3PutErr != nil {
-				return s3PutErr
+			if err != nil {
+				return err
 			}
 
 			// Since we are passing the absolute complete path for the loaded JSON file
@@ -230,7 +240,13 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 				"--additional_columns": string(additional_columns_json),
 			}
 
-			log.Infof("Submitting Transaction %s to Glue Job %s with Arguments %s", order.TransactionId, jobName, jobArguments)
+			logrus.WithFields(logrus.Fields{
+				"glueJobName":       jobName,
+				"inputPath":         jobArguments["--input_path"],
+				"writeOperation":    jobArguments["--write_operation"],
+				"additionalColumns": jobArguments["--additional_columns"],
+			}).Info("Submitting Glue Job")
+
 			submittedJob, glueStartErr := dcaServices.glueAccess.StartJobRun(ctx, &glue.StartJobRunInput{
 				JobName:   &jobName,
 				Arguments: jobArguments,
@@ -240,11 +256,18 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 				return glueStartErr
 			}
 
-			log.Infof("Transaction %s submitted under Glue Job: %s", order.TransactionId, *submittedJob.JobRunId)
+			logrus.WithFields(logrus.Fields{
+				"transactionId": order.TransactionId,
+				"glueJobId":     *submittedJob.JobRunId,
+			}).Info("Glue Job Submitted")
 		}
 
 		// Delete from Queue
-		log.Infof("Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
+		logrus.WithFields(logrus.Fields{
+			"messageId":      message.MessageId,
+			"eventSourceArn": message.EventSourceARN,
+		}).Info("Deleting Message from Queue")
+
 		dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 			QueueUrl:      &message.EventSourceARN,
 			ReceiptHandle: &message.ReceiptHandle,
@@ -281,12 +304,12 @@ func HandleRequestLocally() {
 		},
 	}
 
-	res, err := HandleRequest(context.TODO(), event)
+	res, err := HandleRequest(context.Background(), event)
 	if res != nil {
-		fmt.Printf("Result: %s \n", *res)
+		logrus.WithField("result", *res).Info("request successful locally.")
 	}
 
 	if err != nil {
-		fmt.Printf("Error: %s \n", err)
+		logrus.WithError(err).Error("Error running request locally.")
 	}
 }
