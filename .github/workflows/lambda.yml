@@ -29,7 +29,9 @@ jobs:
         run: make build
 
       - name: Run Tests
-        run: make test
+        run: |
+          make test
+          make coverage
 
       - name: Run Linting
         run: make lint
