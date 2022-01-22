@@ -115,7 +115,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 	logrus.Info("Processing Transaction Details")
 
 	if len(sqsEvent.Records) == 0 {
-		return fmt.Errorf("No SQS Messages found, returning")
+		return fmt.Errorf("no sqs messages found, returning")
 	}
 
 	o, err := dcaServices.ordererFactory.GetOrderers(ctx, dcaServices.ssmAccess)
