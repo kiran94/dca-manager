@@ -9,7 +9,7 @@ build_process_orders:
 	go build -o $(GO_OUT) cmd/process_orders/main.go && rm $(GO_OUT)
 
 test:
-	go test ./pkg/configuration/ ./pkg/orders ./cmd/execute_orders ./cmd/process_orders
+	gotestsum --format testname ./...
 
 lint:
 	go vet ./...
