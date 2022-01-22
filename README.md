@@ -160,6 +160,17 @@ See [AWS Schedule Expressions](https://docs.aws.amazon.com/lambda/latest/dg/serv
 
 See [variables.tf](./terraform/variables.tf)
 
+## Logging
+
+When running within Lambda, functions are logging in JSON format to support filtering. Therfore you can filter using queries like this:
+
+```
+{ $.level = "info" }
+```
+
+See more [here](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html#matching-terms-events)
+
+
 ## Architecture
 
 ![architecture_diagram](docs/architecture_diagram.png)

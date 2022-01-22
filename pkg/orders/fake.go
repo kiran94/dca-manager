@@ -2,7 +2,7 @@ package orders
 
 import (
 	krakenapi "github.com/beldur/kraken-go-api-client"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Generate a Fake Executed Order.
@@ -10,8 +10,7 @@ import (
 // Useful for end-to-end testing so we
 // don't need to keep paying money during testing ;)
 func GetFakeOrderFufilled() (*OrderFufilled, error) {
-
-	log.Warn(`USING FAKE DATA. In order to execute real transactions enable the DCA_ALLOW_REAL environment variable.`)
+	logrus.Warn(`USING FAKE DATA. In order to execute real transactions enable the DCA_ALLOW_REAL environment variable.`)
 
 	var orderErr error
 	orderResult := &OrderFufilled{

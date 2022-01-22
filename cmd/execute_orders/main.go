@@ -20,7 +20,6 @@ import (
 	"github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/kiran94/dca-manager/pkg/orders"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -83,25 +82,20 @@ func init() {
 }
 
 func main() {
-	log.SetOutput(os.Stdout)
-	log.SetReportCaller(false)
-	log.Info("Lambda Execution Starting")
+	logrus.SetOutput(os.Stdout)
+	logrus.SetReportCaller(false)
+	logrus.Info("Lambda Execution Starting")
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") != "" {
-
-		log.SetFormatter(&log.TextFormatter{
-			DisableColors: true,
-			FullTimestamp: true,
-		})
-		log.SetFormatter(&log.JSONFormatter{})
-
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 		awsLambda.Start(HandleRequest)
 
 	} else {
+		logrus.SetFormatter(&logrus.TextFormatter{})
 		HandleRequestLocally()
 	}
 
-	log.Info("Lambda Execution Done.")
+	logrus.Info("Lambda Execution Done.")
 }
 
 func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string, error) {
@@ -121,19 +115,21 @@ func HandleRequest(c context.Context, event awsEvents.CloudWatchEvent) (*string,
 
 // Executes the configured orders.
 func ExecuteOrders(ctx context.Context, services *DCAServices, config *AppConfig) (*[]orders.PendingOrders, error) {
-	log.Info("Executing Orders")
+	logrus.Info("Executing Orders")
 
 	// Get DCA Configuration
-	log.Info("Getting DCA Configuration")
+	logrus.WithFields(logrus.Fields{
+		"s3bucket": config.s3bucket,
+		"s3path":   config.dcaConfigPath,
+	}).Info("Getting DCA Configuration")
 
 	dcaConf, err := services.configSource.GetDCAConfiguration(ctx, services.s3Access, &config.s3bucket, &config.dcaConfigPath)
 	if err != nil {
-		log.Warn("DCA Configuration was nil")
 		return nil, err
 	}
-	log.Debug(dcaConf)
+	logrus.WithField("config", *dcaConf).Debug("Pulled config")
 
-	log.Info("Getting Orderers")
+	logrus.Info("Getting Orderers")
 	o, ordererErr := services.ordererFactory.GetOrderers(ctx, services.ssmAccess)
 	if ordererErr != nil {
 		return nil, ordererErr
@@ -141,9 +137,15 @@ func ExecuteOrders(ctx context.Context, services *DCAServices, config *AppConfig
 
 	// Execute Orders
 	submittedPendingOrders := make([]orders.PendingOrders, len(dcaConf.Orders))
-
 	for index, order := range dcaConf.Orders {
-		log.Infof("Running Order %d with Exchange %s", index, order.Exchange)
+		logrus.WithFields(logrus.Fields{
+			"index":     index,
+			"exchange":  order.Exchange,
+			"pair":      order.Pair,
+			"volume":    order.Volume,
+			"type":      order.OrderType,
+			"direction": order.Direction,
+		}).Info("Executing Order")
 
 		var orderResult *orders.OrderFufilled
 		var orderErr error
@@ -175,13 +177,17 @@ func ExecuteOrders(ctx context.Context, services *DCAServices, config *AppConfig
 			return nil, err
 		}
 
-		log.Infof("Uploading to Bucket %s, Key %s", config.s3bucket, s3Path)
+		logrus.WithFields(logrus.Fields{
+			"s3bucket":      config.s3bucket,
+			"s3path":        s3Path,
+			"transactionId": orderResult.TransactionId,
+		}).Info("Uploading Order result to bucket")
+
 		_, err = services.s3Access.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: &config.s3bucket,
 			Key:    &s3Path,
 			Body:   bytes.NewReader(orderResultBytes),
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -218,12 +224,11 @@ func HandleRequestLocally() {
 	}
 
 	res, err := HandleRequest(context.Background(), event)
-
 	if res != nil {
-		log.Infof("Result: %s \n", *res)
+		logrus.WithField("result", *res).Info("request successful locally.")
 	}
 
 	if err != nil {
-		log.Errorf("Error: %s \n", err)
+		logrus.WithError(err).Error("Error running request locally.")
 	}
 }
