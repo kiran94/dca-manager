@@ -62,7 +62,7 @@ func init() {
 		logrus.WithError(err).Panic("Could not retrieve default aws config")
 	}
 
-	dcaServices := &DCAServices{}
+	dcaServices = &DCAServices{}
 	dcaServices.awsConfig = awsConfig
 	dcaServices.s3Access = pkg.S3{Client: s3.NewFromConfig(awsConfig)}
 	dcaServices.ssmAccess = pkg.SSM{Client: ssm.NewFromConfig(awsConfig)}
@@ -72,7 +72,7 @@ func init() {
 	dcaServices.configSource = configuration.DCAConfiguration{}
 	dcaServices.pendingOrderSubmitter = orders.PendingOrderSubmitter{}
 
-	appConfig := &AppConfig{
+	appConfig = &AppConfig{
 		s3bucket:      os.Getenv(configuration.EnvS3Bucket),
 		dcaConfigPath: os.Getenv(configuration.EnvS3ConfigPath),
 		allowReal:     os.Getenv(configuration.EnvAllowReal) != "",
@@ -139,7 +139,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 
 		// If the message is a fake/testing message, mark as deleted and continue
 		if *realAtt.StringValue == "false" {
-			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s", message.MessageId)
+			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
 			_, err = dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 				QueueUrl:      &message.EventSourceARN,
 				ReceiptHandle: &message.ReceiptHandle,
@@ -244,7 +244,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 		}
 
 		// Delete from Queue
-		log.Infof("Deleting MessageId %s", message.MessageId)
+		log.Infof("Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
 		dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 			QueueUrl:      &message.EventSourceARN,
 			ReceiptHandle: &message.ReceiptHandle,
@@ -274,7 +274,7 @@ func HandleRequestLocally() {
 						StringValue: aws.String("false"),
 					},
 				},
-				EventSourceARN: "",
+				EventSourceARN: "fake_eventsourcearn",
 				EventSource:    "",
 				AWSRegion:      "",
 			},

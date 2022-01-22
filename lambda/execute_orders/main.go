@@ -61,7 +61,7 @@ func init() {
 		logrus.WithError(err).Panic("Could not retrieve default aws config")
 	}
 
-	dcaServices := &DCAServices{}
+	dcaServices = &DCAServices{}
 	dcaServices.awsConfig = awsConfig
 	dcaServices.s3Access = pkg.S3{Client: s3.NewFromConfig(awsConfig)}
 	dcaServices.ssmAccess = pkg.SSM{Client: ssm.NewFromConfig(awsConfig)}
@@ -70,7 +70,7 @@ func init() {
 	dcaServices.configSource = configuration.DCAConfiguration{}
 	dcaServices.pendingOrderSubmitter = orders.PendingOrderSubmitter{}
 
-	appConfig := &AppConfig{
+	appConfig = &AppConfig{
 		s3bucket:      os.Getenv(configuration.EnvS3Bucket),
 		dcaConfigPath: os.Getenv(configuration.EnvS3ConfigPath),
 		allowReal:     os.Getenv(configuration.EnvAllowReal) != "",
@@ -125,6 +125,7 @@ func ExecuteOrders(ctx context.Context, services *DCAServices, config *AppConfig
 
 	// Get DCA Configuration
 	log.Info("Getting DCA Configuration")
+
 	dcaConf, err := services.configSource.GetDCAConfiguration(ctx, services.s3Access, &config.s3bucket, &config.dcaConfigPath)
 	if err != nil {
 		log.Warn("DCA Configuration was nil")
