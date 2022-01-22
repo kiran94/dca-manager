@@ -81,12 +81,14 @@ export DCA_PENDING_ORDERS_QUEUE_URL=$(terraform -chdir=terraform output -raw pen
 export DCA_PENDING_ORDER_S3_PREFIX=$(terraform -chdir=terraform output -raw aws_lambda_pending_order_path)
 ```
 
-Run or Debug:
+The `makefile` documents all the recommended commands:
 
 ```sh
 make install_tools
 
-make # or make debug
+make build
+make test
+make lint
 ```
 
 ### Running
