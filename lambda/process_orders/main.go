@@ -181,7 +181,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 
 		// Upload Details to S3
 		s3Bucket := appConfig.s3bucket
-		s3PathPrefix := appConfig.dcaConfigPath
+		s3PathPrefix := appConfig.transactions.processedS3TransactionPrefix
 
 		for _, order := range *orders {
 
