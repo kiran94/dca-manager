@@ -63,10 +63,14 @@ func (s SQS) DeleteMessage(ctx context.Context, params *sqs.DeleteMessageInput, 
 
 // AWS Glue
 
-type GlueAccess struct {
+type GlueAccess interface {
+	StartJobRun(ctx context.Context, params *glue.StartJobRunInput, optFns ...func(*glue.Options)) (*glue.StartJobRunOutput, error)
+}
+
+type Glue struct {
 	Client *glue.Client
 }
 
-func (g GlueAccess) StartJobRun(ctx context.Context, params *glue.StartJobRunInput, optFns ...func(*glue.Options)) (*glue.StartJobRunOutput, error) {
+func (g Glue) StartJobRun(ctx context.Context, params *glue.StartJobRunInput, optFns ...func(*glue.Options)) (*glue.StartJobRunOutput, error) {
 	return g.Client.StartJobRun(ctx, params, optFns...)
 }
