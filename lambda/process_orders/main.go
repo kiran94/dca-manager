@@ -11,20 +11,78 @@ import (
 	awsEvents "github.com/aws/aws-lambda-go/events"
 	awsLambda "github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	krakenapi "github.com/beldur/kraken-go-api-client"
-	dcaConfig "github.com/kiran94/dca-manager/configuration"
-	"github.com/kiran94/dca-manager/orders"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/kiran94/dca-manager/pkg"
+	"github.com/kiran94/dca-manager/pkg/configuration"
+	"github.com/kiran94/dca-manager/pkg/orders"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	exchangeAttribute string = "Exchange"
-	realAttribute     string = "Real"
+	dcaServices *DCAServices
+	appConfig   *AppConfig
 )
+
+type DCAServices struct {
+	awsConfig             aws.Config
+	s3Access              pkg.S3Access
+	ssmAccess             pkg.SSMAccess
+	sqsAccess             pkg.SQSAccess
+	glueAccess            pkg.GlueAccess
+	configSource          configuration.DCAConfigurationSource
+	ordererFactory        orders.OrdererFactory
+	pendingOrderSubmitter orders.PendingOrderQueue
+}
+
+type AppConfig struct {
+	s3bucket      string
+	dcaConfigPath string
+	allowReal     bool
+	transactions  struct {
+		pendingS3TransactionPrefix   string
+		processedS3TransactionPrefix string
+	}
+	queue struct {
+		sqsUrl string
+	}
+	glue struct {
+		processTransactionJob       string
+		processTransactionOperation string
+	}
+}
+
+func init() {
+	awsConfig, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		logrus.WithError(err).Panic("Could not retrieve default aws config")
+	}
+
+	dcaServices = &DCAServices{}
+	dcaServices.awsConfig = awsConfig
+	dcaServices.s3Access = pkg.S3{Client: s3.NewFromConfig(awsConfig)}
+	dcaServices.ssmAccess = pkg.SSM{Client: ssm.NewFromConfig(awsConfig)}
+	dcaServices.sqsAccess = pkg.SQS{Client: sqs.NewFromConfig(awsConfig)}
+	dcaServices.glueAccess = pkg.Glue{Client: glue.NewFromConfig(awsConfig)}
+	dcaServices.ordererFactory = orders.OrdererFac{}
+	dcaServices.configSource = configuration.DCAConfiguration{}
+	dcaServices.pendingOrderSubmitter = orders.PendingOrderSubmitter{}
+
+	appConfig = &AppConfig{
+		s3bucket:      os.Getenv(configuration.EnvS3Bucket),
+		dcaConfigPath: os.Getenv(configuration.EnvS3ConfigPath),
+		allowReal:     os.Getenv(configuration.EnvAllowReal) != "",
+	}
+	appConfig.transactions.pendingS3TransactionPrefix = os.Getenv(configuration.EnvS3PendingTransaction)
+	appConfig.transactions.processedS3TransactionPrefix = os.Getenv(configuration.EnvS3ProcessedTransaction)
+	appConfig.queue.sqsUrl = os.Getenv(configuration.EnvSQSPendingOrdersQueue)
+	appConfig.glue.processTransactionJob = os.Getenv(configuration.EnvGlueProcessTransactionJob)
+	appConfig.glue.processTransactionOperation = os.Getenv(configuration.EnvGlueProcessTransactionOperation)
+}
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -48,41 +106,27 @@ func main() {
 	log.Info("Lambda Execution Done.")
 }
 
-func HandleRequest(c context.Context, event awsEvents.SQSEvent) (*string, error) {
-	awsConfig, err := awsConfig.LoadDefaultConfig(c)
-	if err != nil {
+func HandleRequest(ctx context.Context, event awsEvents.SQSEvent) (*string, error) {
+	if err := ProcessTransactions(ctx, dcaServices, appConfig, event); err != nil {
 		return nil, err
 	}
 
-	err = ProcessTransactions(&awsConfig, &c, event)
-	return nil, err
+	return nil, nil
 }
 
 // Process Pending Transactions in the Queue.
 // Pulls from the Queue and gets the details from the downstream Exchange.
 // Pushes the details to S3 and marks as done from the Queue.
-func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEvent awsEvents.SQSEvent) error {
+func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfig *AppConfig, sqsEvent awsEvents.SQSEvent) error {
 	log.Info("Getting Transaction Details")
 
-	// Call Kraken API
-	key, secret, ssmErr := dcaConfig.GetKrakenDetails(*awsConfig, *context)
-	if ssmErr != nil {
-		return ssmErr
-	}
-
-	// Create Orderer (per Exchange)
-	o := map[string]orders.Orderer{}
-	o["kraken"] = orders.KrakenOrderer{
-		Client: krakenapi.New(*key, *secret),
-	}
-
-	s3Client := s3.NewFromConfig(*awsConfig)
-	sqsClient := sqs.NewFromConfig(*awsConfig)
-	glueClient := glue.NewFromConfig(*awsConfig)
-
 	if len(sqsEvent.Records) == 0 {
-		log.Warn("No SQS Messages found, returning")
-		return nil
+		return fmt.Errorf("No SQS Messages found, returning")
+	}
+
+	o, err := dcaServices.ordererFactory.GetOrderers(ctx, dcaServices.ssmAccess)
+	if err != nil {
+		return err
 	}
 
 	// Process Each of the SQS Messages
@@ -90,23 +134,26 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 		log.Infof("Processing SQS Message: %s from %s", message.MessageId, message.EventSourceARN)
 
 		// Extract Details from the Message
-		exchange := message.MessageAttributes[exchangeAttribute]
-		realAtt := message.MessageAttributes[realAttribute]
+		exchange := message.MessageAttributes["Exchange"]
+		realAtt := message.MessageAttributes["Real"]
 
 		// If the message is a fake/testing message, mark as deleted and continue
 		if *realAtt.StringValue == "false" {
-			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s", message.MessageId)
-			sqsClient.DeleteMessage(*context, &sqs.DeleteMessageInput{
+			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
+			_, err = dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 				QueueUrl:      &message.EventSourceARN,
 				ReceiptHandle: &message.ReceiptHandle,
 			})
 
+			if err != nil {
+				return err
+			}
+
 			continue
 		}
 
-		if exchange.StringValue == nil {
-			log.Warnf("Recieved SQS message with no Exchange Set. Skipping MessageId: %s", message.MessageId)
-			continue
+		if exchange.StringValue == nil || *exchange.StringValue == "" {
+			return fmt.Errorf("recieved sqs message with no exchange set. Skipping message %s", message.MessageId)
 		}
 
 		messageBytes := []byte(message.Body)
@@ -114,27 +161,32 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 		var po orders.PendingOrders
 		err := json.Unmarshal(messageBytes, &po)
 		if err != nil {
-			log.Error("Unable to unmarshal json from Message %s", message.MessageId)
+			log.Errorf("Unable to unmarshal json from Message %s", message.MessageId)
 			return err
 		}
 
 		// Process the Transaction
 		log.Infof("Processing Exchange: %s, Transactions: %s", *exchange.StringValue, po.TransactionId)
-		orders, err := o[*exchange.StringValue].ProcessTransaction(po.TransactionId)
+		exchangeOrderer, ok := (*o)[*exchange.StringValue]
+		if !ok {
+			return fmt.Errorf("exchange %s was not configured", *exchange.StringValue)
+		}
+
+		orders, err := exchangeOrderer.ProcessTransaction(po.TransactionId)
 		if err != nil {
 			return err
 		}
 
-		log.Debugf("Orders from processed transactions: %s", orders)
+		log.Debugf("Orders from processed transactions: %v", orders)
 
 		// Upload Details to S3
-		s3Bucket := os.Getenv(dcaConfig.EnvS3Bucket)
-		s3PathPrefix := os.Getenv(dcaConfig.EnvS3ProcessedTransaction)
+		s3Bucket := appConfig.s3bucket
+		s3PathPrefix := appConfig.transactions.processedS3TransactionPrefix
 
 		for _, order := range *orders {
 
 			if order.TransactionId == "" {
-				log.Warnf("Found an order with no transaction id: %s", order)
+				log.Warnf("Found an order with no transaction id: %v", order)
 				continue
 			}
 
@@ -151,7 +203,7 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 			}
 
 			log.Infof("Uploading Transaction %s to Bucket %s, Key %s", order.TransactionId, s3Bucket, s3Path)
-			_, s3PutErr := s3Client.PutObject(*context, &s3.PutObjectInput{
+			_, s3PutErr := dcaServices.s3Access.PutObject(ctx, &s3.PutObjectInput{
 				Bucket: &s3Bucket,
 				Key:    &s3Path,
 				Body:   bytes.NewReader(orderBytes),
@@ -171,15 +223,15 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 			}
 
 			// Submit Glue Job
-			jobName := os.Getenv(dcaConfig.EnvGlueProcessTransactionJob)
+			jobName := appConfig.glue.processTransactionJob
 			jobArguments := map[string]string{
 				"--input_path":         fmt.Sprintf("s3a://%s/%s", s3Bucket, s3Path),
-				"--write_operation":    os.Getenv(dcaConfig.EnvGlueProcessTransactionOperation),
+				"--write_operation":    appConfig.glue.processTransactionOperation,
 				"--additional_columns": string(additional_columns_json),
 			}
 
 			log.Infof("Submitting Transaction %s to Glue Job %s with Arguments %s", order.TransactionId, jobName, jobArguments)
-			submittedJob, glueStartErr := glueClient.StartJobRun(*context, &glue.StartJobRunInput{
+			submittedJob, glueStartErr := dcaServices.glueAccess.StartJobRun(ctx, &glue.StartJobRunInput{
 				JobName:   &jobName,
 				Arguments: jobArguments,
 			})
@@ -192,8 +244,8 @@ func ProcessTransactions(awsConfig *aws.Config, context *context.Context, sqsEve
 		}
 
 		// Delete from Queue
-		log.Infof("Deleting MessageId %s", message.MessageId)
-		sqsClient.DeleteMessage(*context, &sqs.DeleteMessageInput{
+		log.Infof("Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
+		dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 			QueueUrl:      &message.EventSourceARN,
 			ReceiptHandle: &message.ReceiptHandle,
 		})
@@ -222,7 +274,7 @@ func HandleRequestLocally() {
 						StringValue: aws.String("false"),
 					},
 				},
-				EventSourceARN: "",
+				EventSourceARN: "fake_eventsourcearn",
 				EventSource:    "",
 				AWSRegion:      "",
 			},

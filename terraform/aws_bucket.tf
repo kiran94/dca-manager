@@ -38,8 +38,8 @@ resource "aws_s3_bucket" "main" {
 resource "aws_s3_bucket_object" "config" {
   bucket = aws_s3_bucket.main.bucket
   key    = "config.json"
-  source = "../configuration/example_config.json"
-  etag   = filemd5("../configuration/example_config.json")
+  source = "../pkg/configuration/example_config.json"
+  etag   = filemd5("../pkg/configuration/example_config.json")
 
   lifecycle {
     ignore_changes = all

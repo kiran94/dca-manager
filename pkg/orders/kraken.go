@@ -5,17 +5,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/beldur/kraken-go-api-client"
-	config "github.com/kiran94/dca-manager/configuration"
+	krakenapi "github.com/beldur/kraken-go-api-client"
+	config "github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
-type KrakenOrderer struct {
-	Client *krakenapi.KrakenAPI
+type KrakenAccess interface {
+	AddOrder(pair string, direction string, orderType string, volume string, args map[string]string) (*krakenapi.AddOrderResponse, error)
+	QueryOrders(txids string, args map[string]string) (*krakenapi.QueryOrdersResponse, error)
 }
 
-func (ko *KrakenOrderer) New(client *krakenapi.KrakenApi) {
+type KrakenOrderer struct {
+	Client KrakenAccess
+}
+
+func (ko *KrakenOrderer) New(client KrakenAccess) {
 	ko.Client = client
 }
 
@@ -54,6 +59,9 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 // information and standardise inot the standard
 // OrderComplete object
 func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderComplete, error) {
+	if len(transactionId) == 0 {
+		return nil, errors.New("no transactions provided")
+	}
 
 	txids := strings.Join(transactionId, ",")
 	args := make(map[string]string, 1)
@@ -64,9 +72,10 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 		return nil, err
 	}
 
-	completeOrders := make([]OrderComplete, len(transactionId))
+	completeOrders := make([]OrderComplete, len(*transactions))
 
 	log.Info("Mapping back response to transactions")
+	index := 0
 	for transactionId := range *transactions {
 		log.Debugf("Mapping %s", transactionId)
 
@@ -84,8 +93,9 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 			CloseTime:      co.CloseTime,
 		}
 
-		log.Debugf("Complete Order: Transaction %s: Order: %s \n", transactionId, orderComplete)
-		completeOrders = append(completeOrders, orderComplete)
+		log.Debugf("Complete Order: Transaction %s: Order: %v \n", transactionId, orderComplete)
+		completeOrders[index] = orderComplete
+		index += 1
 	}
 
 	return &completeOrders, nil
