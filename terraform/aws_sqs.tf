@@ -4,6 +4,6 @@ resource "aws_sqs_queue" "pending_orders_queue" {
   message_retention_seconds  = 1209600
 }
 
-output "pending_orders_queue_arn" {
-  value = aws_sqs_queue.pending_orders_queue.arn
+output "pending_orders_queue_url" {
+  value = aws_sqs_queue.pending_orders_queue.url
 }
