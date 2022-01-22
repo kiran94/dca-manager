@@ -3,8 +3,8 @@ package orders
 import (
 	"context"
 
-	"github.com/kiran94/dca-manager/pkg/configuration"
 	"github.com/kiran94/dca-manager/pkg"
+	"github.com/kiran94/dca-manager/pkg/configuration"
 
 	krakenapi "github.com/beldur/kraken-go-api-client"
 )
@@ -14,6 +14,7 @@ type OrdererFactory interface {
 }
 
 type OrdererFac struct{}
+
 func (o OrdererFac) GetOrderers(ctx context.Context, ssm pkg.SSMAccess) (*map[string]Orderer, error) {
 
 	orderers := map[string]Orderer{}

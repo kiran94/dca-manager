@@ -319,7 +319,7 @@ func TestExecuteOrdersAllowRealOrderError(t *testing.T) {
 
 	appConfig.allowReal = true
 	pos, err := ExecuteOrders(context.Background(), services, appConfig)
-assert.Nil(t, pos)
+	assert.Nil(t, pos)
 	assert.NotNil(t, err)
 	assert.Equal(t, expectedError, err)
 }

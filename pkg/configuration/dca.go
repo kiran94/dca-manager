@@ -38,7 +38,7 @@ type DCAOrder struct {
 
 type DCAConfiguration struct{}
 type DCAConfigurationSource interface {
-    GetDCAConfiguration(ctx context.Context, s3Client pkg.S3Access, s3Bucket *string, s3ConfigPath *string) (*DCAConfig, error)
+	GetDCAConfiguration(ctx context.Context, s3Client pkg.S3Access, s3Bucket *string, s3ConfigPath *string) (*DCAConfig, error)
 }
 
 // Gets DCA Configuration from S3
