@@ -9,7 +9,7 @@ build_process_orders:
 	go build -o $(GO_OUT) cmd/process_orders/main.go && rm $(GO_OUT)
 
 test:
-	gotestsum --format testname ./...
+	gotestsum --format testname ./... -- -race
 
 lint:
 	# go vet ./...
