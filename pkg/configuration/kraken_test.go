@@ -22,7 +22,7 @@ func TestGetKrakenDetailsErrorGettingKey(t *testing.T) {
 	mockSSM := pkg.MockSSMClient{}
 	mockSSM.On("GetParameter", mock.Anything, expectedInput, mock.Anything).Return(expectedParameter, expectedErr)
 
-    krakenConfig := KrakenConf{}
+	krakenConfig := KrakenConf{}
 	key, secret, err := krakenConfig.GetKrakenDetails(context.Background(), &mockSSM)
 
 	mockSSM.AssertExpectations(t)
@@ -48,7 +48,7 @@ func TestGetKrakenDetailsErrorGettingSecret(t *testing.T) {
 	mockSSM.On("GetParameter", mock.Anything, expectedKeyInput, mock.Anything).Return(expectedKeyOutput, nil)
 	mockSSM.On("GetParameter", mock.Anything, expectedSecretInput, mock.Anything).Return(expectedSecretOutput, expectedErr)
 
-    krakenConfig := KrakenConf{}
+	krakenConfig := KrakenConf{}
 	key, secret, err := krakenConfig.GetKrakenDetails(context.Background(), &mockSSM)
 
 	mockSSM.AssertExpectations(t)
@@ -74,7 +74,7 @@ func TestGetKrakenDetails(t *testing.T) {
 	mockSSM.On("GetParameter", mock.Anything, expectedKeyInput, mock.Anything).Return(expectedKeyOutput, nil)
 	mockSSM.On("GetParameter", mock.Anything, expectedSecretInput, mock.Anything).Return(expectedSecretOutput, nil)
 
-    krakenConfig := KrakenConf{}
+	krakenConfig := KrakenConf{}
 	key, secret, err := krakenConfig.GetKrakenDetails(context.Background(), &mockSSM)
 
 	mockSSM.AssertExpectations(t)

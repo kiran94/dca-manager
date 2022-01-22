@@ -2,7 +2,7 @@
 
 > Dollar Cost Average Manager
 
-[![glue](https://github.com/kiran94/dca-manager/actions/workflows/glue.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/glue.yml) [![lambda](https://github.com/kiran94/dca-manager/actions/workflows/lambda.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/lambda.yml)
+[![glue](https://github.com/kiran94/dca-manager/actions/workflows/glue.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/glue.yml) [![lambda](https://github.com/kiran94/dca-manager/actions/workflows/lambda.yml/badge.svg)](https://github.com/kiran94/dca-manager/actions/workflows/lambda.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/kiran94/dca-manager.svg)](https://pkg.go.dev/github.com/kiran94/dca-manager) [![Go Report Card](https://goreportcard.com/badge/github.com/kiran94/dca-manager)](https://goreportcard.com/report/github.com/kiran94/dca-manager)
 
 <!-- toc GFM -->
 

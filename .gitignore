@@ -72,3 +72,4 @@ data
 function.zip
 
 glue/jars/*.jar
+glue/.env

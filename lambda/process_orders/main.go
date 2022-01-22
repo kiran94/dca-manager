@@ -139,7 +139,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 
 		// If the message is a fake/testing message, mark as deleted and continue
 		if *realAtt.StringValue == "false" {
-			log.Warnf("Recieved SQS message which was not real. Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
+			log.Warnf("Received SQS message which was not real. Deleting MessageId %s from queue %s", message.MessageId, message.EventSourceARN)
 			_, err = dcaServices.sqsAccess.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 				QueueUrl:      &message.EventSourceARN,
 				ReceiptHandle: &message.ReceiptHandle,

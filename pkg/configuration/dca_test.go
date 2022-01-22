@@ -9,11 +9,10 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/kiran94/dca-manager/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/kiran94/dca-manager/pkg"
 )
-
 
 // Ensures when the object cannot be found
 // then an err is returned
