@@ -84,6 +84,8 @@ export DCA_PENDING_ORDER_S3_PREFIX=$(terraform -chdir=terraform output -raw aws_
 Run or Debug:
 
 ```sh
+make install_tools
+
 make # or make debug
 ```
 
