@@ -12,7 +12,7 @@ build_process_orders:
 test:
 	gotestsum --format testname -- -race -coverprofile=$(COVER_OUT) ./...
 
-coverage:
+coverage: test
 	go tool cover -func=$(COVER_OUT)
 
 lint:
