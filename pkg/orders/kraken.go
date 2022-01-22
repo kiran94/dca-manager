@@ -51,7 +51,7 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 	if len(addOrderResponse.TransactionIds) > 1 {
 		logrus.Warnf("Received more then one TransactionIds %s", addOrderResponse.TransactionIds)
 	} else if len(addOrderResponse.TransactionIds) == 0 {
-		return nil, errors.New("No Transactions ids received")
+		return nil, errors.New("no transactions ids received")
 	}
 
 	o := OrderFufilled{}

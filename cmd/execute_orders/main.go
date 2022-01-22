@@ -153,7 +153,7 @@ func ExecuteOrders(ctx context.Context, services *DCAServices, config *AppConfig
 		if config.allowReal {
 			exchange, ok := (*o)[order.Exchange]
 			if !ok {
-				return nil, fmt.Errorf("No Orderer found for Exchange %s", order.Exchange)
+				return nil, fmt.Errorf("no orderer found for exchange %s", order.Exchange)
 			}
 
 			orderResult, orderErr = exchange.MakeOrder(&order)

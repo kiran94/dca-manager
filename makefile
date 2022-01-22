@@ -9,13 +9,15 @@ build_process_orders:
 	go build -o $(GO_OUT) cmd/process_orders/main.go && rm $(GO_OUT)
 
 test:
-	go test ./pkg/configuration/ ./pkg/orders ./cmd/execute_orders ./cmd/process_orders
+	gotestsum --format testname ./... -- -race
 
 lint:
-	go vet
+	# go vet ./...
+	staticcheck ./...
 
 fmt:
 	gofmt -s -w ./
+	terraform -chdir=terraform fmt
 
 debug:
 	go build -gcflags=all="-N -l" -o $(GO_OUT) ./main.go
@@ -43,3 +45,4 @@ update_all_packages:
 install_tools:
 	go install gotest.tools/gotestsum@latest
 	go install golang.org/x/tools/cmd/goimports@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest

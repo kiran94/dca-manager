@@ -49,7 +49,7 @@ func TestProcessTransactionsNoRecords(t *testing.T) {
 	sqsEvent := awsEvents.SQSEvent{Records: []awsEvents.SQSMessage{}}
 
 	err := ProcessTransactions(context.Background(), services, config, sqsEvent)
-	assert.Equal(t, "No SQS Messages found, returning", err.Error())
+	assert.Equal(t, "no sqs messages found, returning", err.Error())
 }
 
 // Ensures when there is an error getting orderers

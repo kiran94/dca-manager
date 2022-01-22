@@ -189,7 +189,7 @@ func TestExecuteOrdersNoOrdererForExchange(t *testing.T) {
 	pos, err := ExecuteOrders(context.Background(), services, appConfig)
 
 	assert.Nil(t, pos)
-	assert.Contains(t, err.Error(), "No Orderer found for Exchange binance")
+	assert.Contains(t, err.Error(), "no orderer found for exchange binance")
 }
 
 // Ensures when allo real is disabled, then
