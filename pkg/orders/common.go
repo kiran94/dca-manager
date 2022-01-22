@@ -22,7 +22,7 @@ type OrderFufilled struct {
 // where the s3 bucket & key define the result from the
 // exchange from the initial call.
 //
-// An order could be accepted by the exchange but not nessasarily
+// An order could be accepted by the exchange but not necessarily
 // successful yet so the payload in s3 is whatever they sent back to us.
 //
 // This object is used to push the transaction to an out-of-process

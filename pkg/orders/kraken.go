@@ -42,9 +42,9 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 	log.Infof("Order Response: %s", addOrderResponse)
 
 	if len(addOrderResponse.TransactionIds) > 1 {
-		log.Warnf("Recieved more then one TransactionIds %s", addOrderResponse.TransactionIds)
+		log.Warnf("Received more then one TransactionIds %s", addOrderResponse.TransactionIds)
 	} else if len(addOrderResponse.TransactionIds) == 0 {
-		return nil, errors.New("No Transactions ids recieved")
+		return nil, errors.New("No Transactions ids received")
 	}
 
 	o := OrderFufilled{}
@@ -56,7 +56,7 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 
 // Processes the given Transactions.
 // For a given transaction, reach out to Kraken and get the order
-// information and standardise inot the standard
+// information and standardise into the standard
 // OrderComplete object
 func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderComplete, error) {
 	if len(transactionId) == 0 {

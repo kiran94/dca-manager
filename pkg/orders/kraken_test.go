@@ -31,9 +31,9 @@ func TestMakeOrderDisabled(t *testing.T) {
 
 	krakenOrder := KrakenOrderer{}
 	krakenOrder.Client = &MockKrakenAccess{}
-	fufilled, err := krakenOrder.MakeOrder(&order)
+	fulfilled, err := krakenOrder.MakeOrder(&order)
 
-	assert.Nil(t, fufilled)
+	assert.Nil(t, fulfilled)
 	assert.Nil(t, err)
 
 	mockKrakenAccess := MockKrakenAccess{}
@@ -61,8 +61,8 @@ func TestMakeOrderErrorExecutingOrder(t *testing.T) {
 	m.On("AddOrder", order.Pair, order.Direction, order.OrderType, order.Volume, mock.Anything).Return(expectedAddOrderResponse, exepectedErr).Once()
 	krakenOrder.Client = &m
 
-	fufilled, err := krakenOrder.MakeOrder(&order)
-	assert.Nil(t, fufilled)
+	fulfilled, err := krakenOrder.MakeOrder(&order)
+	assert.Nil(t, fulfilled)
 	assert.NotNil(t, err)
 	assert.Equal(t, exepectedErr, err)
 	m.AssertExpectations(t)
@@ -88,9 +88,9 @@ func TestMakeOrderNoTransactionIds(t *testing.T) {
 	m.On("AddOrder", order.Pair, order.Direction, order.OrderType, order.Volume, mock.Anything).Return(expectedAddOrderResponse, expectedErr).Once()
 	krakenOrder.Client = &m
 
-	fufilled, err := krakenOrder.MakeOrder(&order)
+	fulfilled, err := krakenOrder.MakeOrder(&order)
 
-	assert.Nil(t, fufilled)
+	assert.Nil(t, fulfilled)
 	assert.Equal(t, expectedErr, err)
 	m.AssertExpectations(t)
 }
@@ -117,11 +117,11 @@ func TestMakeOrder(t *testing.T) {
 	m.On("AddOrder", order.Pair, order.Direction, order.OrderType, order.Volume, mock.Anything).Return(expectedAddOrderResponse, nil).Once()
 	krakenOrder.Client = &m
 
-	fufilled, err := krakenOrder.MakeOrder(&order)
+	fulfilled, err := krakenOrder.MakeOrder(&order)
 
-	assert.Equal(t, expectedAddOrderResponse, fufilled.Result)
-	assert.Equal(t, "TXID", fufilled.TransactionId)
-	assert.NotEqual(t, 0, fufilled.Timestamp)
+	assert.Equal(t, expectedAddOrderResponse, fulfilled.Result)
+	assert.Equal(t, "TXID", fulfilled.TransactionId)
+	assert.NotEqual(t, 0, fulfilled.Timestamp)
 	assert.Nil(t, err)
 	m.AssertExpectations(t)
 }
