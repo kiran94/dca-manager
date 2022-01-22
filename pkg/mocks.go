@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
@@ -44,3 +45,18 @@ func (s MockSQSAccess) SendMessage(ctx context.Context, params *sqs.SendMessageI
 	return args.Get(0).(*sqs.SendMessageOutput), args.Error(1)
 }
 
+func (s MockSQSAccess) DeleteMessage(ctx context.Context, params *sqs.DeleteMessageInput, optFns ...func(*sqs.Options)) (*sqs.DeleteMessageOutput, error) {
+	args := s.Called(ctx, params, optFns)
+	return args.Get(0).(*sqs.DeleteMessageOutput), args.Error(1)
+}
+
+// Glue
+
+type MockGlueAccess struct {
+	mock.Mock
+}
+
+func (g MockGlueAccess) StartJobRun(ctx context.Context, params *glue.StartJobRunInput, optFns ...func(*glue.Options)) (*glue.StartJobRunOutput, error) {
+	args := g.Called(ctx, params, optFns)
+	return args.Get(0).(*glue.StartJobRunOutput), args.Error(1)
+}
