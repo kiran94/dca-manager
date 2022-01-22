@@ -1,4 +1,5 @@
 GO_OUT=main
+COVER_OUT=cover.out
 
 build: build_execute_orders build_process_orders
 
@@ -9,7 +10,10 @@ build_process_orders:
 	go build -o $(GO_OUT) cmd/process_orders/main.go && rm $(GO_OUT)
 
 test:
-	gotestsum --format testname ./... -- -race
+	gotestsum --format testname -- -race -coverprofile=$(COVER_OUT) ./...
+
+coverage:
+	go tool cover -func=$(COVER_OUT)
 
 lint:
 	# go vet ./...
