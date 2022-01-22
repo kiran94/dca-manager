@@ -12,7 +12,8 @@ test:
 	go test ./pkg/configuration/ ./pkg/orders ./cmd/execute_orders ./cmd/process_orders
 
 lint:
-	go vet
+	go vet ./...
+	staticcheck ./...
 
 fmt:
 	gofmt -s -w ./
@@ -43,3 +44,4 @@ update_all_packages:
 install_tools:
 	go install gotest.tools/gotestsum@latest
 	go install golang.org/x/tools/cmd/goimports@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
