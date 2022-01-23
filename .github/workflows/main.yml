@@ -85,6 +85,32 @@ jobs:
       - name: Validate Example Config
         run: jsonschema -i example_config.json schema.json
 
+  validate-glue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: glue
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+
+      - name: Setup Pipenv
+        run: pip install pipenv
+
+      - name: Install Requirements
+        run: pipenv install --dev
+
+      - name: Lint
+        run: pipenv run flake8
+
+
   # Layer 2
   deploy-lambda-execute-orders:
     needs: [build-lambda, terraform-lint, validate-config]
@@ -159,5 +185,31 @@ jobs:
           --function-name ${{ secrets.AWS_LAMBDA_PROCESS_ORDERS_NAME }}
           --s3-bucket ${{ secrets.AWS_LAMBDA_BUCKET }}
           --s3-key ${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_PROCESS_ORDERS_KEY }}
+
+  deploy-glue:
+    needs: [validate-glue, validate-config]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: glue
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+          role-session-name: "GithubAction"
+
+      - name: Deploy
+        run: |
+          aws s3 sync scripts s3://${{ secrets.AWS_GLUE_BUCKET }}/${{ secrets.AWS_GLUE_SCRIPT_PREFIX }}
 
     # Layer 3
