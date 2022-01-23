@@ -9,6 +9,7 @@ import (
 	"github.com/kiran94/dca-manager/pkg"
 )
 
+// Environment Variable names to retrieve.
 const (
 	EnvS3Bucket                        string = "DCA_BUCKET"
 	EnvS3ConfigPath                    string = "DCA_CONFIG"
@@ -20,12 +21,12 @@ const (
 	EnvGlueProcessTransactionOperation string = "DCA_GLUE_PROCESS_TRANSACTION_OPERATION"
 )
 
-// The root object for DCA configuration
+// DCAConfig is the root object for DCA configuration.
 type DCAConfig struct {
 	Orders []DCAOrder `json:"orders"`
 }
 
-// A single order to be executed by DCA
+// DCAOrder is a single order to be executed
 type DCAOrder struct {
 	Exchange  string `json:"exchange"`
 	Direction string `json:"direction"`
@@ -36,12 +37,15 @@ type DCAOrder struct {
 	Enabled   bool   `json:"enabled"`
 }
 
+// DCAConfiguration gets configuration from an underlying source.
 type DCAConfiguration struct{}
+
+// DCAConfigurationSource is an abstraction to get configuration.
 type DCAConfigurationSource interface {
 	GetDCAConfiguration(ctx context.Context, s3Client pkg.S3Access, s3Bucket *string, s3ConfigPath *string) (*DCAConfig, error)
 }
 
-// Gets DCA Configuration from S3
+// GetDCAConfiguration gets DCA configuration from S3
 func (d DCAConfiguration) GetDCAConfiguration(ctx context.Context, s3Client pkg.S3Access, s3Bucket *string, s3ConfigPath *string) (*DCAConfig, error) {
 
 	configObject, err := s3Client.GetObject(ctx, &s3.GetObjectInput{

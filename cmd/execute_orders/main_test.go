@@ -68,7 +68,7 @@ func setup(apply func(s3 *pkg.MockS3Access, ssm *pkg.MockSSMClient, sqs *pkg.Moc
 	appConfig := &AppConfig{s3bucket: "bucket", dcaConfigPath: "config_path", allowReal: false}
 	appConfig.transactions.pendingS3TransactionPrefix = "s3_pending_prefix"
 	appConfig.transactions.processedS3TransactionPrefix = "s3_processed_prefix"
-	appConfig.queue.sqsUrl = "sqs_url"
+	appConfig.queue.sqsURL = "sqs_url"
 	appConfig.glue.processTransactionJob = "process_transaction_glue_job"
 	appConfig.glue.processTransactionOperation = "process_transaction_glue_operation"
 
@@ -212,7 +212,7 @@ func TestExecuteOrdersAllowRealDisabled(t *testing.T) {
 		c.On("GetDCAConfiguration", mock.Anything, s3, &appConfig.s3bucket, &appConfig.dcaConfigPath).Return(dcaConfig, nil)
 		o.On("GetOrderers", mock.Anything, mock.Anything).Return(expectedOrdererResult, nil)
 		s3.On("PutObject", mock.Anything, mock.Anything, mock.Anything).Return(expectedS3PutObject, nil)
-		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsUrl).Return(expectedErr)
+		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsURL).Return(expectedErr)
 	})
 	mockOrderer.On("MakeOrder", mock.Anything).Times(0)
 
@@ -226,7 +226,7 @@ func TestExecuteOrdersAllowRealDisabled(t *testing.T) {
 	assert.Equal(t, 1, len(*pos))
 	assert.Equal(t, "bucket", (*pos)[0].S3Bucket)
 	assert.Equal(t, "s3_pending_prefix/exchange=kraken/OEBG2U-KIRAN-4U6WHJ.json", (*pos)[0].S3Key)
-	assert.Equal(t, "OEBG2U-KIRAN-4U6WHJ", (*pos)[0].TransactionId)
+	assert.Equal(t, "OEBG2U-KIRAN-4U6WHJ", (*pos)[0].TransactionID)
 }
 
 // Ensures when there is an error
@@ -250,7 +250,7 @@ func TestExecuteOrdersErrorUploadingObject(t *testing.T) {
 		c.On("GetDCAConfiguration", mock.Anything, s3, &appConfig.s3bucket, &appConfig.dcaConfigPath).Return(dcaConfig, nil)
 		o.On("GetOrderers", mock.Anything, mock.Anything).Return(expectedOrdererResult, nil)
 		s3.On("PutObject", mock.Anything, mock.Anything, mock.Anything).Return(expectedS3PutObject, expectedErr)
-		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsUrl).Return(nil)
+		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsURL).Return(nil)
 	})
 	mockOrderer.On("MakeOrder", mock.Anything).Times(0)
 
@@ -281,7 +281,7 @@ func TestExecuteOrdersErrorSubmittingQueue(t *testing.T) {
 		c.On("GetDCAConfiguration", mock.Anything, s3, &appConfig.s3bucket, &appConfig.dcaConfigPath).Return(dcaConfig, nil)
 		o.On("GetOrderers", mock.Anything, mock.Anything).Return(expectedOrdererResult, nil)
 		s3.On("PutObject", mock.Anything, mock.Anything, mock.Anything).Return(expectedS3PutObject, nil)
-		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsUrl).Return(expectedErr)
+		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsURL).Return(expectedErr)
 	})
 	mockOrderer.On("MakeOrder", mock.Anything).Times(0)
 
@@ -310,7 +310,7 @@ func TestExecuteOrdersAllowRealOrderError(t *testing.T) {
 		c.On("GetDCAConfiguration", mock.Anything, s3, &appConfig.s3bucket, &appConfig.dcaConfigPath).Return(dcaConfig, nil)
 		o.On("GetOrderers", mock.Anything, mock.Anything).Return(expectedOrdererResult, nil)
 		s3.On("PutObject", mock.Anything, mock.Anything, mock.Anything).Return(expectedS3PutObject, nil)
-		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsUrl).Return(nil)
+		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsURL).Return(nil)
 	})
 
 	var expectedOrderFufilled = &orders.OrderFufilled{}
@@ -343,11 +343,11 @@ func TestExecuteOrdersAllowRealOrderSuccessful(t *testing.T) {
 		c.On("GetDCAConfiguration", mock.Anything, s3, &appConfig.s3bucket, &appConfig.dcaConfigPath).Return(dcaConfig, nil)
 		o.On("GetOrderers", mock.Anything, mock.Anything).Return(expectedOrdererResult, nil)
 		s3.On("PutObject", mock.Anything, mock.Anything, mock.Anything).Return(expectedS3PutObject, nil)
-		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsUrl).Return(nil)
+		po.On("SubmitPendingOrder", mock.Anything, sqs, mock.Anything, "kraken", appConfig.allowReal, appConfig.queue.sqsURL).Return(nil)
 	})
 
 	var expectedOrderFufilled = &orders.OrderFufilled{
-		TransactionId: "TXID",
+		TransactionID: "TXID",
 		Timestamp:     10002202,
 	}
 	mockOrderer.On("MakeOrder", &dcaConfig.Orders[0]).Return(expectedOrderFufilled, nil)
@@ -361,5 +361,5 @@ func TestExecuteOrdersAllowRealOrderSuccessful(t *testing.T) {
 	assert.Equal(t, 1, len(*pos))
 	assert.Equal(t, "bucket", (*pos)[0].S3Bucket)
 	assert.Equal(t, "s3_pending_prefix/exchange=kraken/TXID.json", (*pos)[0].S3Key)
-	assert.Equal(t, "TXID", (*pos)[0].TransactionId)
+	assert.Equal(t, "TXID", (*pos)[0].TransactionID)
 }

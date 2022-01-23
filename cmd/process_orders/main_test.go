@@ -77,7 +77,7 @@ func TestProcessTransactionsErrorOrderers(t *testing.T) {
 // it is deleted from the queue
 // and no glue job/s3 upload is run
 func TestProcessTransactionsNotReal(t *testing.T) {
-	queueUrl := "EventSourceARN"
+	queueURL := "EventSourceARN"
 	recieptHandle := "recieptHandle"
 	exchange := "kraken"
 	isReal := "false"
@@ -96,7 +96,7 @@ func TestProcessTransactionsNotReal(t *testing.T) {
 
 	mockSqs := pkg.MockSQSAccess{}
 	mockSqs.On("DeleteMessage", mock.Anything, mock.MatchedBy(func(s *sqs.DeleteMessageInput) bool {
-		return (*s.QueueUrl == queueUrl) && (*s.ReceiptHandle == recieptHandle)
+		return (*s.QueueUrl == queueURL) && (*s.ReceiptHandle == recieptHandle)
 	}), mock.Anything).Return(&sqs.DeleteMessageOutput{}, nil)
 
 	services := &DCAServices{
@@ -113,7 +113,7 @@ func TestProcessTransactionsNotReal(t *testing.T) {
 			{
 				MessageId:      "ID",
 				ReceiptHandle:  recieptHandle,
-				EventSourceARN: queueUrl,
+				EventSourceARN: queueURL,
 				MessageAttributes: map[string]awsEvents.SQSMessageAttribute{
 					"Exchange": {StringValue: &exchange},
 					"Real":     {StringValue: &isReal},
@@ -141,12 +141,12 @@ func TestProcessTransactionsExchangeNotFound(t *testing.T) {
 
 	cases := []testCase{
 		{exchange: "binance", expectedErr: "exchange binance was not configured"},
-		{exchange: "", expectedErr: "recieved sqs message with no exchange"},
+		{exchange: "", expectedErr: "received sqs message with no exchange"},
 	}
 
 	for _, currentCase := range cases {
 
-		queueUrl := "EventSourceARN"
+		queueURL := "EventSourceARN"
 		recieptHandle := "recieptHandle"
 		exchange := currentCase.exchange
 		isReal := "true"
@@ -156,7 +156,7 @@ func TestProcessTransactionsExchangeNotFound(t *testing.T) {
 				{
 					MessageId:      "ID",
 					ReceiptHandle:  recieptHandle,
-					EventSourceARN: queueUrl,
+					EventSourceARN: queueURL,
 					MessageAttributes: map[string]awsEvents.SQSMessageAttribute{
 						"Exchange": {StringValue: &exchange},
 						"Real":     {StringValue: &isReal},
@@ -193,7 +193,7 @@ func TestProcessTransactions(t *testing.T) {
 	bucket := "bucket"
 	prefixPath := "path"
 	glueJobName := "glue_job"
-	queueUrl := "EventSourceARN"
+	queueURL := "EventSourceARN"
 	recieptHandle := "recieptHandle"
 	exchange := "kraken"
 	isReal := "true"
@@ -203,7 +203,7 @@ func TestProcessTransactions(t *testing.T) {
 			{
 				MessageId:      "ID",
 				ReceiptHandle:  recieptHandle,
-				EventSourceARN: queueUrl,
+				EventSourceARN: queueURL,
 				MessageAttributes: map[string]awsEvents.SQSMessageAttribute{
 					"Exchange": {StringValue: &exchange},
 					"Real":     {StringValue: &isReal},
@@ -216,7 +216,7 @@ func TestProcessTransactions(t *testing.T) {
 	mockKrakenOrderer := MockKrakenOrderer{}
 	mockKrakenOrderer.On("ProcessTransaction", []string{"TXID"}).Return(&[]orders.OrderComplete{
 		{
-			TransactionId: "TXID",
+			TransactionID: "TXID",
 		},
 	}, nil)
 	expectedOrderer := &map[string]orders.Orderer{"kraken": mockKrakenOrderer}
@@ -230,8 +230,8 @@ func TestProcessTransactions(t *testing.T) {
 	mockS3.On("PutObject", mock.Anything, mock.Anything, mock.Anything).Return(&s3.PutObjectOutput{}, nil)
 
 	mockGlue := pkg.MockGlueAccess{}
-	jobId := "jobId"
-	mockGlue.On("StartJobRun", mock.Anything, mock.Anything, mock.Anything).Return(&glue.StartJobRunOutput{JobRunId: &jobId}, nil)
+	jobID := "jobId"
+	mockGlue.On("StartJobRun", mock.Anything, mock.Anything, mock.Anything).Return(&glue.StartJobRunOutput{JobRunId: &jobID}, nil)
 
 	mockSqs := pkg.MockSQSAccess{}
 	mockSqs.On("DeleteMessage", mock.Anything, mock.Anything, mock.Anything).Return(&sqs.DeleteMessageOutput{}, nil)

@@ -12,13 +12,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// PendingOrderQueue is an abstraction to submit pending orders to a queue.
 type PendingOrderQueue interface {
 	SubmitPendingOrder(ctx context.Context, sc pkg.SQSAccess, po *PendingOrders, exchange string, real bool, sqsQueue string) error
 }
 
-// Submits the given pending order to queue.
+// PendingOrderSubmitter submits pending order to a queue
 type PendingOrderSubmitter struct{}
 
+// SubmitPendingOrder submits a pending order to queue.
 func (p PendingOrderSubmitter) SubmitPendingOrder(ctx context.Context, sc pkg.SQSAccess, po *PendingOrders, exchange string, real bool, sqsQueue string) error {
 	sqsMessageBodyBytes, err := json.Marshal(po)
 	if err != nil {
@@ -36,7 +38,7 @@ func (p PendingOrderSubmitter) SubmitPendingOrder(ctx context.Context, sc pkg.SQ
 			},
 			"TransactionId": {
 				DataType:    aws.String("String"),
-				StringValue: aws.String(po.TransactionId),
+				StringValue: aws.String(po.TransactionID),
 			},
 			"Real": {
 				DataType:    aws.String("String"),
@@ -46,7 +48,7 @@ func (p PendingOrderSubmitter) SubmitPendingOrder(ctx context.Context, sc pkg.SQ
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"transactionId": po.TransactionId,
+		"transactionId": po.TransactionID,
 		"queue":         sqsQueue,
 		"real":          real,
 		"exchange":      exchange,

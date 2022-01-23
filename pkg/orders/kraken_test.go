@@ -82,7 +82,7 @@ func TestMakeOrderNoTransactionIds(t *testing.T) {
 	krakenOrder := KrakenOrderer{}
 
 	expectedAddOrderResponse := &krakenapi.AddOrderResponse{TransactionIds: []string{}}
-	expectedErr := errors.New("No Transaction Ids recieved")
+	expectedErr := errors.New("No Transaction Ids received")
 
 	m := MockKrakenAccess{}
 	m.On("AddOrder", order.Pair, order.Direction, order.OrderType, order.Volume, mock.Anything).Return(expectedAddOrderResponse, expectedErr).Once()
@@ -120,7 +120,7 @@ func TestMakeOrder(t *testing.T) {
 	fulfilled, err := krakenOrder.MakeOrder(&order)
 
 	assert.Equal(t, expectedAddOrderResponse, fulfilled.Result)
-	assert.Equal(t, "TXID", fulfilled.TransactionId)
+	assert.Equal(t, "TXID", fulfilled.TransactionID)
 	assert.NotEqual(t, 0, fulfilled.Timestamp)
 	assert.Nil(t, err)
 	m.AssertExpectations(t)
@@ -149,10 +149,10 @@ func TestProcessTransactionsErrorQuerying(t *testing.T) {
 	var expectedOrderResponse *krakenapi.QueryOrdersResponse
 	var expectedErr error = errors.New("error querying")
 
-	transactionId := "TXID"
-	m.On("QueryOrders", transactionId, mock.Anything).Return(expectedOrderResponse, expectedErr)
+	transactionID := "TXID"
+	m.On("QueryOrders", transactionID, mock.Anything).Return(expectedOrderResponse, expectedErr)
 
-	order, err := krakenOrder.ProcessTransaction(transactionId)
+	order, err := krakenOrder.ProcessTransaction(transactionID)
 
 	assert.Nil(t, order)
 	assert.NotNil(t, err)
@@ -180,17 +180,17 @@ func TestProcessTransactions(t *testing.T) {
 	}
 	var expectedErr error
 
-	transactionId := "TXID"
-	m.On("QueryOrders", transactionId, mock.Anything).Return(returnOrderResponse, expectedErr)
+	transactionID := "TXID"
+	m.On("QueryOrders", transactionID, mock.Anything).Return(returnOrderResponse, expectedErr)
 
-	orders, err := krakenOrder.ProcessTransaction(transactionId)
+	orders, err := krakenOrder.ProcessTransaction(transactionID)
 
 	assert.NotNil(t, orders)
 	assert.Nil(t, err)
 	m.AssertExpectations(t)
 
 	expectedOrderResponse := OrderComplete{
-		TransactionId:  (*returnOrderResponse)["TXID"].TransactionID,
+		TransactionID:  (*returnOrderResponse)["TXID"].TransactionID,
 		ExchangeStatus: (*returnOrderResponse)["TXID"].Status,
 		Pair:           (*returnOrderResponse)["TXID"].Description.AssetPair,
 		OrderType:      (*returnOrderResponse)["TXID"].Description.OrderType,
