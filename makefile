@@ -17,6 +17,7 @@ coverage: test
 
 lint:
 	# go vet ./...
+	golint -set_exit_status ./...
 	staticcheck ./...
 
 fmt:
@@ -50,3 +51,4 @@ install_tools:
 	go install gotest.tools/gotestsum@latest
 	go install golang.org/x/tools/cmd/goimports@latest
 	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install golang.org/x/lint/golint@latest
