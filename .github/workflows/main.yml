@@ -187,7 +187,7 @@ jobs:
           --s3-key ${{ secrets.AWS_LAMBDA_SCRIPT_PREFIX }}/${{ secrets.AWS_LAMBDA_PROCESS_ORDERS_KEY }}
 
   deploy-glue:
-    needs: [validate-glue, validate-config]
+    needs: [validate-glue, validate-config, terraform-lint]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
