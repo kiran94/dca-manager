@@ -11,20 +11,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// KrakenAccess is an abstraction that provides access to the Kraken Exchange.
 type KrakenAccess interface {
 	AddOrder(pair string, direction string, orderType string, volume string, args map[string]string) (*krakenapi.AddOrderResponse, error)
 	QueryOrders(txids string, args map[string]string) (*krakenapi.QueryOrdersResponse, error)
 }
 
+// KrakenOrderer providess access to the Kraken Exchange
 type KrakenOrderer struct {
 	Client KrakenAccess
 }
 
+// New creates an entirely new access object to Kraken.
 func (ko *KrakenOrderer) New(client KrakenAccess) {
 	ko.Client = client
 }
 
-// Execute the given DCA Order on the Kraken Exchange
+// MakeOrder executes the provided DCAOrder on the Kraken Exchange.
 func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error) {
 
 	logrus.WithFields(logrus.Fields{
@@ -57,20 +60,19 @@ func (ko KrakenOrderer) MakeOrder(order *config.DCAOrder) (*OrderFufilled, error
 	o := OrderFufilled{}
 	o.Result = addOrderResponse
 	o.Timestamp = time.Now().Unix()
-	o.TransactionId = addOrderResponse.TransactionIds[0]
+	o.TransactionID = addOrderResponse.TransactionIds[0]
 	return &o, nil
 }
 
-// Processes the given Transactions.
-// For a given transaction, reach out to Kraken and get the order
-// information and standardise into the standard
-// OrderComplete object
-func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderComplete, error) {
-	if len(transactionId) == 0 {
+// ProcessTransaction takes the given transactionIds
+// and loads details for them from the Kraken Exchange
+// and standardise the order into a OrderComplete object
+func (ko KrakenOrderer) ProcessTransaction(transactionID ...string) (*[]OrderComplete, error) {
+	if len(transactionID) == 0 {
 		return nil, errors.New("no transactions provided")
 	}
 
-	txids := strings.Join(transactionId, ",")
+	txids := strings.Join(transactionID, ",")
 	args := make(map[string]string, 1)
 
 	logrus.WithField("transactionId", txids).Info("Getting Details for Transactions")
@@ -83,12 +85,12 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 
 	logrus.Info("Mapping back response to transactions")
 	index := 0
-	for transactionId := range *transactions {
-		logrus.WithField("transactionId", transactionId).Debug("Mapping Transaction")
+	for transactionID := range *transactions {
+		logrus.WithField("transactionId", transactionID).Debug("Mapping Transaction")
 
-		co := (*transactions)[transactionId]
+		co := (*transactions)[transactionID]
 		orderComplete := OrderComplete{
-			TransactionId:  transactionId,
+			TransactionID:  transactionID,
 			ExchangeStatus: co.Status,
 			Pair:           co.Description.AssetPair,
 			OrderType:      co.Description.OrderType,
@@ -101,12 +103,12 @@ func (ko KrakenOrderer) ProcessTransaction(transactionId ...string) (*[]OrderCom
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"transactionId": transactionId,
+			"transactionId": transactionID,
 			"orderComplete": orderComplete,
 		}).Debug("Complete Order")
 
 		completeOrders[index] = orderComplete
-		index += 1
+		index++
 	}
 
 	return &completeOrders, nil

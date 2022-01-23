@@ -13,7 +13,7 @@ type Orderer interface {
 
 // OrderFufilled which has been sent to the Exchange
 type OrderFufilled struct {
-	TransactionId string      `json:"transaction_id"`
+	TransactionID string      `json:"transaction_id"`
 	Timestamp     int64       `json:"timestamp"`
 	Result        interface{} `json:"result"`
 }
@@ -28,7 +28,7 @@ type OrderFufilled struct {
 // This object is used to push the transaction to an out-of-process
 // queue for later processing
 type PendingOrders struct {
-	TransactionId string `json:"transaction_id"`
+	TransactionID string `json:"transaction_id"`
 	S3Bucket      string `json:"s3_bucket"`
 	S3Key         string `json:"s3_key"`
 }
@@ -37,7 +37,7 @@ type PendingOrders struct {
 // This object acts as a common abstraction
 // amongst all exchanges
 type OrderComplete struct {
-	TransactionId  string          `json:"transaction_id"`
+	TransactionID  string          `json:"transaction_id"`
 	ExchangeStatus string          `json:"exchange_status"`
 	Pair           string          `json:"pair"`
 	OrderType      string          `json:"order_type"`

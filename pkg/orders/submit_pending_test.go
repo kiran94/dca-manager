@@ -21,7 +21,7 @@ func TestSubmitPendingOrderErrorSubmittingMessage(t *testing.T) {
 	err := errors.New("error sending output")
 	mockSQS.On("SendMessage", mock.Anything, mock.Anything, mock.Anything).Return(expectedSQSReturn, err)
 
-	po := &PendingOrders{TransactionId: "TXID", S3Bucket: "bucket", S3Key: "key"}
+	po := &PendingOrders{TransactionID: "TXID", S3Bucket: "bucket", S3Key: "key"}
 	exchange := "exchange"
 	real := false
 	sqsQueue := "queue_url"
@@ -40,7 +40,7 @@ func TestSubmitPendingOrder(t *testing.T) {
 	var err error
 	mockSQS.On("SendMessage", mock.Anything, mock.Anything, mock.Anything).Return(expectedSQSReturn, err)
 
-	po := &PendingOrders{TransactionId: "TXID", S3Bucket: "bucket", S3Key: "key"}
+	po := &PendingOrders{TransactionID: "TXID", S3Bucket: "bucket", S3Key: "key"}
 	exchange := "exchange"
 	real := false
 	sqsQueue := "queue_url"

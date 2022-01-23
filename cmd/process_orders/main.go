@@ -27,6 +27,7 @@ var (
 	appConfig   *AppConfig
 )
 
+// DCAServices contains all services to be injected into logic.
 type DCAServices struct {
 	awsConfig             aws.Config
 	s3Access              pkg.S3Access
@@ -38,6 +39,7 @@ type DCAServices struct {
 	pendingOrderSubmitter orders.PendingOrderQueue
 }
 
+// AppConfig contains all configuration to be injected into logic
 type AppConfig struct {
 	s3bucket      string
 	dcaConfigPath string
@@ -47,7 +49,7 @@ type AppConfig struct {
 		processedS3TransactionPrefix string
 	}
 	queue struct {
-		sqsUrl string
+		sqsURL string
 	}
 	glue struct {
 		processTransactionJob       string
@@ -78,7 +80,7 @@ func init() {
 	}
 	appConfig.transactions.pendingS3TransactionPrefix = os.Getenv(configuration.EnvS3PendingTransaction)
 	appConfig.transactions.processedS3TransactionPrefix = os.Getenv(configuration.EnvS3ProcessedTransaction)
-	appConfig.queue.sqsUrl = os.Getenv(configuration.EnvSQSPendingOrdersQueue)
+	appConfig.queue.sqsURL = os.Getenv(configuration.EnvSQSPendingOrdersQueue)
 	appConfig.glue.processTransactionJob = os.Getenv(configuration.EnvGlueProcessTransactionJob)
 	appConfig.glue.processTransactionOperation = os.Getenv(configuration.EnvGlueProcessTransactionOperation)
 }
@@ -90,17 +92,17 @@ func main() {
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") != "" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
-		awsLambda.Start(HandleRequest)
+		awsLambda.Start(handleRequest)
 
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{})
-		HandleRequestLocally()
+		handleRequestLocally()
 	}
 
 	logrus.Info("Lambda Execution Done.")
 }
 
-func HandleRequest(ctx context.Context, event awsEvents.SQSEvent) (*string, error) {
+func handleRequest(ctx context.Context, event awsEvents.SQSEvent) (*string, error) {
 	if err := ProcessTransactions(ctx, dcaServices, appConfig, event); err != nil {
 		return nil, err
 	}
@@ -108,9 +110,10 @@ func HandleRequest(ctx context.Context, event awsEvents.SQSEvent) (*string, erro
 	return nil, nil
 }
 
-// Process Pending Transactions in the Queue.
-// Pulls from the Queue and gets the details from the downstream Exchange.
-// Pushes the details to S3 and marks as done from the Queue.
+// ProcessTransactions reads transactions from the queue
+// and gets the details of those transactions from the downstream exchange
+// these details are pushed to S3 and an Anaytics job is created
+// to ingest it into the DataLake
 func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfig *AppConfig, sqsEvent awsEvents.SQSEvent) error {
 	logrus.Info("Processing Transaction Details")
 
@@ -170,7 +173,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 		// Process the Transaction
 		logrus.WithFields(logrus.Fields{
 			"exchange":      *exchange.StringValue,
-			"transactionId": po.TransactionId,
+			"transactionId": po.TransactionID,
 		}).Info("Processing Transaction")
 
 		exchangeOrderer, ok := (*o)[*exchange.StringValue]
@@ -178,7 +181,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 			return fmt.Errorf("exchange %s was not configured", *exchange.StringValue)
 		}
 
-		orders, err := exchangeOrderer.ProcessTransaction(po.TransactionId)
+		orders, err := exchangeOrderer.ProcessTransaction(po.TransactionID)
 		if err != nil {
 			return err
 		}
@@ -190,7 +193,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 
 		for _, order := range *orders {
 
-			if order.TransactionId == "" {
+			if order.TransactionID == "" {
 				logrus.Warnf("Found an order with no transaction id: %v", order)
 				continue
 			}
@@ -199,7 +202,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 				"%s/exchange=%s/%s.json",
 				s3PathPrefix,
 				strings.ToLower(*exchange.StringValue),
-				order.TransactionId,
+				order.TransactionID,
 			)
 
 			orderBytes, err := json.Marshal(order)
@@ -208,7 +211,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 			}
 
 			logrus.WithFields(logrus.Fields{
-				"transactionId": order.TransactionId,
+				"transactionId": order.TransactionID,
 				"s3bucket":      s3Bucket,
 				"s3path":        s3Path,
 			}).Info("Uploading Transaction result to S3")
@@ -226,8 +229,8 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 			// Since we are passing the absolute complete path for the loaded JSON file
 			// the spark won't be able to derive any hive partition columns
 			// so here we are adding the exchange as an additional column
-			additional_columns := map[string]string{"exchange": strings.ToLower(*exchange.StringValue)}
-			additional_columns_json, addErr := json.Marshal(additional_columns)
+			additionalColumns := map[string]string{"exchange": strings.ToLower(*exchange.StringValue)}
+			additionalColumnsJSON, addErr := json.Marshal(additionalColumns)
 			if addErr != nil {
 				return addErr
 			}
@@ -237,7 +240,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 			jobArguments := map[string]string{
 				"--input_path":         fmt.Sprintf("s3a://%s/%s", s3Bucket, s3Path),
 				"--write_operation":    appConfig.glue.processTransactionOperation,
-				"--additional_columns": string(additional_columns_json),
+				"--additional_columns": string(additionalColumnsJSON),
 			}
 
 			logrus.WithFields(logrus.Fields{
@@ -258,7 +261,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 			}
 
 			logrus.WithFields(logrus.Fields{
-				"transactionId": order.TransactionId,
+				"transactionId": order.TransactionID,
 				"glueJobId":     *submittedJob.JobRunId,
 			}).Info("Glue Job Submitted")
 		}
@@ -278,7 +281,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 	return nil
 }
 
-func HandleRequestLocally() {
+func handleRequestLocally() {
 	event := awsEvents.SQSEvent{
 		Records: []awsEvents.SQSMessage{
 			{
@@ -305,7 +308,7 @@ func HandleRequestLocally() {
 		},
 	}
 
-	res, err := HandleRequest(context.Background(), event)
+	res, err := handleRequest(context.Background(), event)
 	if res != nil {
 		logrus.WithField("result", *res).Info("request successful locally.")
 	}

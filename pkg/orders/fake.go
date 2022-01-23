@@ -5,10 +5,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Generate a Fake Executed Order.
-//
+// GetFakeOrderFufilled generates a fake executed order
 // Useful for end-to-end testing so we
-// don't need to keep paying money during testing ;)
+// don't need to keep paying money during testing.
 func GetFakeOrderFufilled() (*OrderFufilled, error) {
 	logrus.Warn(`USING FAKE DATA. In order to execute real transactions enable the DCA_ALLOW_REAL environment variable.`)
 
@@ -28,7 +27,7 @@ func GetFakeOrderFufilled() (*OrderFufilled, error) {
 			},
 		},
 		Timestamp:     12345678,
-		TransactionId: "OEBG2U-KIRAN-4U6WHJ",
+		TransactionID: "OEBG2U-KIRAN-4U6WHJ",
 	}
 
 	return orderResult, orderErr
