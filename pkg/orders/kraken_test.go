@@ -82,7 +82,7 @@ func TestMakeOrderNoTransactionIds(t *testing.T) {
 	krakenOrder := KrakenOrderer{}
 
 	expectedAddOrderResponse := &krakenapi.AddOrderResponse{TransactionIds: []string{}}
-	expectedErr := errors.New("No Transaction Ids recieved")
+	expectedErr := errors.New("No Transaction Ids received")
 
 	m := MockKrakenAccess{}
 	m.On("AddOrder", order.Pair, order.Direction, order.OrderType, order.Volume, mock.Anything).Return(expectedAddOrderResponse, expectedErr).Once()

@@ -141,7 +141,7 @@ func TestProcessTransactionsExchangeNotFound(t *testing.T) {
 
 	cases := []testCase{
 		{exchange: "binance", expectedErr: "exchange binance was not configured"},
-		{exchange: "", expectedErr: "recieved sqs message with no exchange"},
+		{exchange: "", expectedErr: "received sqs message with no exchange"},
 	}
 
 	for _, currentCase := range cases {

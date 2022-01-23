@@ -155,7 +155,7 @@ func ProcessTransactions(ctx context.Context, dcaServices *DCAServices, appConfi
 		}
 
 		if exchange.StringValue == nil || *exchange.StringValue == "" {
-			return fmt.Errorf("recieved sqs message with no exchange set. Skipping message %s", message.MessageId)
+			return fmt.Errorf("received sqs message with no exchange set. Skipping message %s", message.MessageId)
 		}
 
 		messageBytes := []byte(message.Body)
