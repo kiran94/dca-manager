@@ -212,4 +212,14 @@ jobs:
         run: |
           aws s3 sync scripts s3://${{ secrets.AWS_GLUE_BUCKET }}/${{ secrets.AWS_GLUE_SCRIPT_PREFIX }}
 
-    # Layer 3
+  # Layer 3
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [deploy-glue, deploy-lambda-process-orders, deploy-lambda-execute-orders]
+    steps:
+      - name: Release
+        uses: go-semantic-release/action@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
