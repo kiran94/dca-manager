@@ -24,6 +24,18 @@ resource "github_repository" "main" {
   ]
 }
 
+resource "github_branch_protection" "main" {
+  repository_id       = github_repository.main.id
+  pattern             = "main"
+  enforce_admins      = true
+  allows_deletions    = false
+  allows_force_pushes = false
+
+  required_status_checks {
+    strict = true
+  }
+}
+
 # GitHub Action Secrets
 resource "github_actions_secret" "aws_assume_role_arn" {
   repository      = github_repository.main.name
