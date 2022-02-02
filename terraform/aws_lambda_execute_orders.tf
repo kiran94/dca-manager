@@ -110,7 +110,7 @@ resource "aws_iam_role" "execute_orders_iam_role" {
 }
 
 resource "aws_iam_policy_attachment" "attach_lambda_basic_execution_role_execute_order" {
-  name       = "AttachAWSLambdaBasicExecutionRole"
+  name       = "AttachAWSLambdaBasicExecutionRole_ExecuteOrder"
   roles      = [aws_iam_role.execute_orders_iam_role.name]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

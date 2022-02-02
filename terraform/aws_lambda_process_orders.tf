@@ -85,7 +85,7 @@ resource "aws_iam_role" "process_order_iam_role" {
 }
 
 resource "aws_iam_policy_attachment" "attach_lambda_basic_execution_role_process_order" {
-  name       = "AttachAWSLambdaBasicExecutionRole"
+  name       = "AttachAWSLambdaBasicExecutionRole_ProcessOrder"
   roles      = [aws_iam_role.process_order_iam_role.name]
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
