@@ -175,4 +175,31 @@ See more [here](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterA
 
 ## Architecture
 
-![architecture_diagram](docs/architecture_diagram.png)
+```mermaid
+graph TD
+
+    %% NODES
+    Kraken[[Kraken Exchange]]
+    CloudWatch(Amazon Cloudwatch)
+    S3[(Amazon S3)]
+    SQS(Amazon SQS)
+    ExecuteOrdersLambda{{Execute Orders Lambda}}
+    ProcessOrdersLambda{{Process Orders Lambda}}
+    Hudi(Glue / Hudi)
+    Athena(Amazon Athena)
+
+    %% EDGES
+    CloudWatch-->|Time Schedule| ExecuteOrdersLambda
+
+    Kraken --> ExecuteOrdersLambda
+    ExecuteOrdersLambda -->|Store Pending Transaction| S3
+    ExecuteOrdersLambda -->|Post Pending Transaction| SQS
+
+    SQS --> ProcessOrdersLambda
+    ProcessOrdersLambda -->|Store Transaction Details| S3
+    ProcessOrdersLambda -->|Trigger Glue Job| Hudi
+    Hudi --> S3
+
+    S3 -->|Query Glue Tables| Athena
+    Athena -->Further(Potential Further Analystics)
+```
